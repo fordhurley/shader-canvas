@@ -1,4 +1,4 @@
-const THREE = require("three");
+const {WebGLRenderer, Scene, OrthographicCamera, Clock, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} = require("three");
 const {debounce, difference} = require("underscore");
 
 function parseLineNumberFromErrorMsg(msg) {
@@ -61,32 +61,32 @@ module.exports = class ShaderCanvas {
     this.onTextureLoad = null;
     this.onTextureError = null;
 
-    this.renderer = new THREE.WebGLRenderer();
+    this.renderer = new WebGLRenderer();
     this.renderer.setPixelRatio(devicePixelRatio());
     this.domElement = this.renderer.domElement;
 
-    this.scene = new THREE.Scene();
+    this.scene = new Scene();
 
-    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+    this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
     this.camera.position.z = 1;
 
     this.renderer.render(this.scene, this.camera);
 
-    this.clock = new THREE.Clock(true);
+    this.clock = new Clock(true);
 
     this.uniforms = {
       iGlobalTime: {value: 0},
-      iResolution: {value: new THREE.Vector2()},
-      iMouse: {value: new THREE.Vector2()},
+      iResolution: {value: new Vector2()},
+      iMouse: {value: new Vector2()},
       u_time: {value: 0},
-      u_resolution: {value: new THREE.Vector2()},
-      u_mouse: {value: new THREE.Vector2()},
+      u_resolution: {value: new Vector2()},
+      u_mouse: {value: new Vector2()},
     };
 
     this.textures = [];
 
     this.mesh = null;
-    this.geometry = new THREE.PlaneBufferGeometry(2, 2);
+    this.geometry = new PlaneBufferGeometry(2, 2);
 
     this.swapMesh = debounce(this.swapMesh.bind(this), 250);
 
@@ -98,13 +98,13 @@ module.exports = class ShaderCanvas {
   }
 
   swapMesh() {
-    const material = new THREE.ShaderMaterial({
+    const material = new ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader,
       fragmentShader: this.fragShader,
     });
 
-    const tmpMesh = new THREE.Mesh(this.geometry, material);
+    const tmpMesh = new Mesh(this.geometry, material);
 
     this.scene.add(tmpMesh);
 
@@ -194,7 +194,7 @@ module.exports = class ShaderCanvas {
       }
     };
 
-    const texture = new THREE.TextureLoader().load(textureURL, onLoad, null, onError);
+    const texture = new TextureLoader().load(textureURL, onLoad, null, onError);
     this.uniforms[textureId] = {value: texture};
     this.textures.push({textureURL, textureId});
   }
