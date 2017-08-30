@@ -1,5 +1,5 @@
-const {WebGLRenderer, Scene, OrthographicCamera, Clock, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} = require("three");
-const {debounce, difference} = require("underscore");
+import {WebGLRenderer, Scene, OrthographicCamera, Clock, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} from "three";
+import {debounce, difference} from "underscore";
 
 function parseLineNumberFromErrorMsg(msg) {
   const match = /ERROR: \d+:(\d+)/.exec(msg);
