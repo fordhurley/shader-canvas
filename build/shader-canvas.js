@@ -66,11 +66,18 @@ var ShaderCanvas =
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(1).default;
+
+
+/***/ }),
+/* 1 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* WEBPACK VAR INJECTION */(function(module) {/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_three__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_three__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_underscore__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_underscore___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_underscore__);
 
@@ -124,7 +131,7 @@ const defaultUniforms = `
   uniform float u_time;
 `;
 
-module.exports = class ShaderCanvas {
+class ShaderCanvas {
   constructor({buildTextureURL}) {
     if (typeof buildTextureURL !== "function") {
       throw new Error("missing required argument: buildTextureURL(filePath)");
@@ -296,38 +303,9 @@ module.exports = class ShaderCanvas {
 
     // TODO: dispose of the THREE stuff
   }
-};
-
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(1)(module)))
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-module.exports = function(originalModule) {
-	if(!originalModule.webpackPolyfill) {
-		var module = Object.create(originalModule);
-		// module.parent = undefined by default
-		if(!module.children) module.children = [];
-		Object.defineProperty(module, "loaded", {
-			enumerable: true,
-			get: function() {
-				return module.l;
-			}
-		});
-		Object.defineProperty(module, "id", {
-			enumerable: true,
-			get: function() {
-				return module.i;
-			}
-		});
-		Object.defineProperty(module, "exports", {
-			enumerable: true,
-		});
-		module.webpackPolyfill = 1;
-	}
-	return module;
-};
+}
+/* harmony export (immutable) */ __webpack_exports__["default"] = ShaderCanvas;
+;
 
 
 /***/ }),
