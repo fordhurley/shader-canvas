@@ -1,0 +1,17 @@
+{
+  "name": "shader-canvas",
+  "version": "0.0.1",
+  "description": "Run GLSL shader in a canvas",
+  "main": "src/index.js",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.87.1",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "webpack": "^3.5.5"
+  },
+  "scripts": {
+    "build": "webpack"
+  }
+}
