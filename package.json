@@ -10,9 +10,11 @@
   },
   "devDependencies": {
     "uglifyjs-webpack-plugin": "1.0.0-beta.2",
-    "webpack": "^3.5.5"
+    "webpack": "^3.5.5",
+    "webpack-dev-server": "^2.7.1"
   },
   "scripts": {
-    "build": "webpack"
+    "start": "webpack-dev-server --open --open-page example --config webpack.config.js",
+    "build": "webpack --config webpack.config.js"
   }
 }

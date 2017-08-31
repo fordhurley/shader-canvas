@@ -17,7 +17,7 @@ function parseLineNumberFromErrorMsg(msg) {
 function parseTextureDirectives(source) {
   // Looking for lines of the form:
   // uniform sampler2D foo; // ../textures/bar.jpg
-  const test = /^uniform sampler2D (\S+);\s*\/\/\s*(.+)$/gm;
+  const test = /^\s*uniform sampler2D (\S+);\s*\/\/\s*(.+)$/gm;
   const textureDirectives = [];
   let match = test.exec(source);
   while (match !== null) {
@@ -59,7 +59,9 @@ export default class ShaderCanvas {
     this.onShaderLoad = null;
     this.onShaderError = null;
     this.onTextureLoad = null;
-    this.onTextureError = null;
+    this.onTextureError = function(textureURL) {
+      throw new Error("error loading texture " + textureURL);
+    };
 
     this.renderer = new WebGLRenderer();
     this.renderer.setPixelRatio(devicePixelRatio());
