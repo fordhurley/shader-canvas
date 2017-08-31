@@ -56,9 +56,12 @@ export default class ShaderCanvas {
     }
     this.buildTextureURL = buildTextureURL;
 
-    this.onShaderLoad = null;
-    this.onShaderError = null;
-    this.onTextureLoad = null;
+    // Override these for different behavior:
+    this.onShaderLoad = function() {};
+    this.onShaderError = function(msg, lineNumber) {
+      throw new Error("shader error " + msg);
+    };
+    this.onTextureLoad = function() {};
     this.onTextureError = function(textureURL) {
       throw new Error("error loading texture " + textureURL);
     };
@@ -116,16 +119,12 @@ export default class ShaderCanvas {
         diagnostics = tmpMesh.material.program.diagnostics;
       }
       if (diagnostics && !diagnostics.runnable) {
-        if (this.onShaderError) {
-          const msg = diagnostics.fragmentShader.log;
-          this.onShaderError(msg, parseLineNumberFromErrorMsg(msg));
-        }
+        const msg = diagnostics.fragmentShader.log;
+        this.onShaderError(msg, parseLineNumberFromErrorMsg(msg));
         tmpMesh.material.dispose();
         this.scene.remove(tmpMesh);
       } else {
-        if (this.onShaderLoad) {
-          this.onShaderLoad();
-        }
+        this.onShaderLoad();
         if (this.mesh) {
           // console.log("removing old mesh")
           this.mesh.material.dispose();
@@ -183,17 +182,13 @@ export default class ShaderCanvas {
     const textureURL = this.buildTextureURL(filePath);
 
     const onLoad = () => {
-      if (this.onTextureLoad) {
-        this.onTextureLoad();
-      }
+      this.onTextureLoad();
       // TODO: might be good to swap the mesh immediately, whether or not it loads
       setTimeout(this.swapMesh, 100);
     };
 
     const onError = () => {
-      if (this.onTextureError) {
-        this.onTextureError(textureURL);
-      }
+      this.onTextureError(textureURL);
     };
 
     const texture = new TextureLoader().load(textureURL, onLoad, null, onError);
