@@ -1,15 +1,11 @@
 <html>
   <head>
     <title>shader-canvas example</title>
-    <script src="../build/shader-canvas.min.js"></script>
+    <script src="../build/shader-canvas.js"></script>
   </head>
   <body>
     <script>
-      var shaderCanvas = new ShaderCanvas({
-        buildTextureURL: function(filePath) {
-          return filePath;
-        },
-      });
+      var shaderCanvas = new ShaderCanvas();
       document.body.appendChild(shaderCanvas.domElement);
       shaderCanvas.setSize(400, 400);
       shaderCanvas.updateShader(`

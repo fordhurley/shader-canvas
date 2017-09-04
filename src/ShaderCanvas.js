@@ -50,13 +50,11 @@ const defaultUniforms = `
 `;
 
 export default class ShaderCanvas {
-  constructor({buildTextureURL}) {
-    if (typeof buildTextureURL !== "function") {
-      throw new Error("missing required argument: buildTextureURL(filePath)");
-    }
-    this.buildTextureURL = buildTextureURL;
-
+  constructor() {
     // Override these for different behavior:
+    this.buildTextureURL = function(filePath) {
+      return filePath;
+    };
     this.onShaderLoad = function() {};
     this.onShaderError = function(msg, lineNumber) {
       throw new Error("shader error " + msg);
