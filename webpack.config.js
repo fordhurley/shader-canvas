@@ -19,7 +19,7 @@ module.exports = [
       filename: "shader-canvas.js",
       path: path.resolve(__dirname, "build"),
       library: "ShaderCanvas",
+      libraryTarget: "umd",
     },
-    devtool: "cheap-eval-source-map",
   },
 ];
