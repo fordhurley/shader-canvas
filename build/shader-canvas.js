@@ -94,8 +94,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 function parseLineNumberFromErrorMsg(msg) {
   const match = /ERROR: \d+:(\d+)/.exec(msg);
-  let lineNumber;
-  if (match[1]) {
+  let lineNumber = null;
+  if (match && match[1]) {
     lineNumber = parseInt(match[1], 10);
   }
   if (lineNumber !== null) {
