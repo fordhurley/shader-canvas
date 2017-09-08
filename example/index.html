@@ -13,7 +13,7 @@
     <script>
       var shaderCanvas = new ShaderCanvas();
       document.body.appendChild(shaderCanvas.domElement);
-      shaderCanvas.setSize(window.innerWidth, window.innerHeight);
+
       shaderCanvas.updateShader(`
         uniform sampler2D normalMap; // brickwall_normal-map.jpg
 
@@ -44,6 +44,12 @@
           gl_FragColor = vec4(color, 1.0);
         }
       `);
+
+      shaderCanvas.setSize(window.innerWidth, window.innerHeight);
+
+      window.addEventListener("resize", function() {
+        shaderCanvas.setSize(window.innerWidth, window.innerHeight);
+      });
     </script>
   </body>
 </html>
