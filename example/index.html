@@ -14,7 +14,7 @@
       var shaderCanvas = new ShaderCanvas();
       document.body.appendChild(shaderCanvas.domElement);
 
-      shaderCanvas.updateShader(`
+      shaderCanvas.setShader(`
         uniform sampler2D normalMap; // brickwall_normal-map.jpg
 
         const float lightIntensity = 0.35;

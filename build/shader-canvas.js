@@ -191,7 +191,7 @@ class ShaderCanvas {
     requestAnimationFrame(this._update);
   }
 
-  updateShader(source) {
+  setShader(source) {
     const parsedTextures = parseTextureDirectives(source);
     const oldTextures = Object(__WEBPACK_IMPORTED_MODULE_1_underscore__["difference"])(this.textures, parsedTextures);
     const newTextures = Object(__WEBPACK_IMPORTED_MODULE_1_underscore__["difference"])(parsedTextures, this.textures);

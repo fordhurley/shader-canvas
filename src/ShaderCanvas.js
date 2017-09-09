@@ -100,7 +100,7 @@ export default class ShaderCanvas {
     requestAnimationFrame(this._update);
   }
 
-  updateShader(source) {
+  setShader(source) {
     const parsedTextures = parseTextureDirectives(source);
     const oldTextures = difference(this.textures, parsedTextures);
     const newTextures = difference(parsedTextures, this.textures);

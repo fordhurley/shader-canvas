@@ -4,7 +4,7 @@
 var shaderCanvas = new ShaderCanvas();
 document.body.appendChild(shaderCanvas.domElement);
 
-shaderCanvas.updateShader(`
+shaderCanvas.setShader(`
   void main() {
     vec2 uv = gl_FragCoord.xy / iResolution.xy;
     gl_FragColor = vec4(uv.x, 0.0, uv.y, 1.0);
