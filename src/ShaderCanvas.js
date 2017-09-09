@@ -91,7 +91,7 @@ export default class ShaderCanvas {
     this.mesh = null;
     this.geometry = new PlaneBufferGeometry(2, 2);
 
-    this.swapMesh = debounce(this.swapMesh.bind(this), 250);
+    this._swapMesh = debounce(this._swapMesh.bind(this), 250);
 
     this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
@@ -100,37 +100,14 @@ export default class ShaderCanvas {
     requestAnimationFrame(this._update);
   }
 
-  swapMesh() {
-    const material = new ShaderMaterial({
-      uniforms: this.uniforms,
-      vertexShader,
-      fragmentShader: this.fragShader,
-    });
-
-    const tmpMesh = new Mesh(this.geometry, material);
-
-    this.scene.add(tmpMesh);
-
-    setTimeout(() => {
-      let diagnostics;
-      if (tmpMesh.material.program) {
-        diagnostics = tmpMesh.material.program.diagnostics;
-      }
-      if (diagnostics && !diagnostics.runnable) {
-        const msg = diagnostics.fragmentShader.log;
-        this.onShaderError(msg, parseLineNumberFromErrorMsg(msg));
-        tmpMesh.material.dispose();
-        this.scene.remove(tmpMesh);
-      } else {
-        this.onShaderLoad();
-        if (this.mesh) {
-          // console.log("removing old mesh")
-          this.mesh.material.dispose();
-          this.scene.remove(this.mesh);
-        }
-        this.mesh = tmpMesh;
-      }
-    }, 100);
+  updateShader(source) {
+    const parsedTextures = parseTextureDirectives(source);
+    const oldTextures = difference(this.textures, parsedTextures);
+    const newTextures = difference(parsedTextures, this.textures);
+    oldTextures.forEach(texture => this.removeTexture(texture.textureId));
+    newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
+    this.fragShader = defaultUniforms + source;
+    this._swapMesh();
   }
 
   setSize(width, height) {
@@ -144,36 +121,11 @@ export default class ShaderCanvas {
     this.renderer.setSize(width, height);
   }
 
-  _onMouseMove() {
-    const {width, height} = this.renderer.getSize();
-
-    this.uniforms.iMouse.value.x = event.offsetX / width;
-    this.uniforms.iMouse.value.y = 1 - (event.offsetY / height);
-    this.uniforms.u_mouse.value.x = this.uniforms.iMouse.value.x;
-    this.uniforms.u_mouse.value.y = this.uniforms.iMouse.value.y;
-  }
-
-  _update() {
-    if (this.IS_DESTROYED) { return; }
-    requestAnimationFrame(this._update);
-    this.render();
-  }
-
   render() {
     this.uniforms.iGlobalTime.value = this.clock.getElapsedTime();
     this.uniforms.u_time.value = this.uniforms.iGlobalTime.value;
 
     this.renderer.render(this.scene, this.camera);
-  }
-
-  updateShader(source) {
-    const parsedTextures = parseTextureDirectives(source);
-    const oldTextures = difference(this.textures, parsedTextures);
-    const newTextures = difference(parsedTextures, this.textures);
-    oldTextures.forEach(texture => this.removeTexture(texture.textureId));
-    newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
-    this.fragShader = defaultUniforms + source;
-    this.swapMesh();
   }
 
   addTexture(filePath, textureId) {
@@ -182,7 +134,7 @@ export default class ShaderCanvas {
     const onLoad = () => {
       this.onTextureLoad();
       // TODO: might be good to swap the mesh immediately, whether or not it loads
-      setTimeout(this.swapMesh, 100);
+      setTimeout(this._swapMesh, 100);
     };
 
     const onError = () => {
@@ -215,5 +167,53 @@ export default class ShaderCanvas {
     this.domElement = null;
 
     // TODO: dispose of the THREE stuff
+  }
+
+  _swapMesh() {
+    const material = new ShaderMaterial({
+      uniforms: this.uniforms,
+      vertexShader,
+      fragmentShader: this.fragShader,
+    });
+
+    const tmpMesh = new Mesh(this.geometry, material);
+
+    this.scene.add(tmpMesh);
+
+    setTimeout(() => {
+      let diagnostics;
+      if (tmpMesh.material.program) {
+        diagnostics = tmpMesh.material.program.diagnostics;
+      }
+      if (diagnostics && !diagnostics.runnable) {
+        const msg = diagnostics.fragmentShader.log;
+        this.onShaderError(msg, parseLineNumberFromErrorMsg(msg));
+        tmpMesh.material.dispose();
+        this.scene.remove(tmpMesh);
+      } else {
+        this.onShaderLoad();
+        if (this.mesh) {
+          // console.log("removing old mesh")
+          this.mesh.material.dispose();
+          this.scene.remove(this.mesh);
+        }
+        this.mesh = tmpMesh;
+      }
+    }, 100);
+  }
+
+  _onMouseMove() {
+    const {width, height} = this.renderer.getSize();
+
+    this.uniforms.iMouse.value.x = event.offsetX / width;
+    this.uniforms.iMouse.value.y = 1 - (event.offsetY / height);
+    this.uniforms.u_mouse.value.x = this.uniforms.iMouse.value.x;
+    this.uniforms.u_mouse.value.y = this.uniforms.iMouse.value.y;
+  }
+
+  _update() {
+    if (this.IS_DESTROYED) { return; }
+    requestAnimationFrame(this._update);
+    this.render();
   }
 };
