@@ -14,36 +14,19 @@
       var shaderCanvas = new ShaderCanvas();
       document.body.appendChild(shaderCanvas.domElement);
 
-      shaderCanvas.updateShader(`
-        uniform sampler2D normalMap; // brickwall_normal-map.jpg
+      var urls = [
+        "example.glsl",
+        "https://raw.githubusercontent.com/fordhurley/atom-glsl-preview/master/examples/frag.glsl",
+      ];
+      var index = 0;
+      shaderCanvas.loadShader(urls[index]);
 
-        const float lightIntensity = 0.35;
-        const float ambientIntensity = 0.45;
+      shaderCanvas.domElement.addEventListener("click", function() {
+        index++;
+        index %= urls.length;
+        shaderCanvas.loadShader(urls[index]);
+      });
 
-        // Move mouse to change light direction.
-
-        void main() {
-          vec2 uv = gl_FragCoord.xy / iResolution.xy;
-          float aspect = iResolution.x / iResolution.y;
-          uv.x *= aspect;
-          uv = mod(uv, 1.0);
-
-          vec3 color = vec3(0.7, 0.1, 0.1);
-
-          vec3 normal = texture2D(normalMap, uv).xyz;
-          normal = 2.0 * normal - 1.0; // map to [-1, 1] range
-
-          vec2 mouse = 2.0 * iMouse - 1.0; // map to [-1, 1] range
-          vec3 lightDirection = vec3(mouse, 1.0); // where it's coming from
-
-          float light = dot(normal, lightDirection * lightIntensity);
-          light += ambientIntensity;
-          color *= light;
-          color = clamp(color, 0.0, 1.0);
-
-          gl_FragColor = vec4(color, 1.0);
-        }
-      `);
 
       shaderCanvas.setSize(window.innerWidth, window.innerHeight);
 

@@ -4,7 +4,7 @@
 var shaderCanvas = new ShaderCanvas();
 document.body.appendChild(shaderCanvas.domElement);
 
-shaderCanvas.updateShader(`
+shaderCanvas.setShader(`
   void main() {
     vec2 uv = gl_FragCoord.xy / iResolution.xy;
     gl_FragColor = vec4(uv.x, 0.0, uv.y, 1.0);
@@ -14,8 +14,14 @@ shaderCanvas.updateShader(`
 shaderCanvas.setSize(400, 400);
 ```
 
-A full example can be found in `example/`.
+Shaders can be loaded from a URL:
 
+```javascript
+shaderCanvas.loadShader("shader.glsl");
+shaderCanvas.loadShader("//raw.githubusercontent.com/fordhurley/atom-glsl-preview/2c9d19fc/examples/frag.glsl")
+```
+
+A full example can be found in `example/`.
 
 ## Uniforms
 
