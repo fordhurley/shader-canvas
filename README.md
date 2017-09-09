@@ -14,8 +14,14 @@ shaderCanvas.setShader(`
 shaderCanvas.setSize(400, 400);
 ```
 
-A full example can be found in `example/`.
+Shaders can be loaded from a URL:
 
+```javascript
+shaderCanvas.loadShader("shader.glsl");
+shaderCanvas.loadShader("//raw.githubusercontent.com/fordhurley/atom-glsl-preview/2c9d19fc/examples/frag.glsl")
+```
+
+A full example can be found in `example/`.
 
 ## Uniforms
 

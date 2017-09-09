@@ -110,6 +110,24 @@ export default class ShaderCanvas {
     this._swapMesh();
   }
 
+  loadShader(url) {
+    var xhr = new XMLHttpRequest();
+    xhr.addEventListener("load", (e) => {
+      if (xhr.status >= 400) {
+        console.error("loadTexture error:", xhr.status, xhr.statusText);
+        this.onTextureError(url);
+        return;
+      }
+      this.setShader(xhr.responseText);
+    });
+    xhr.addEventListener("error", (e) => {
+      console.error("loadTexture error:", e);
+      this.onTextureError(url);
+    });
+    xhr.open("GET", url);
+    xhr.send();
+  }
+
   setSize(width, height) {
     const dpr = devicePixelRatio();
 
