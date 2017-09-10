@@ -21,6 +21,14 @@ shaderCanvas.loadShader("shader.glsl");
 shaderCanvas.loadShader("//raw.githubusercontent.com/fordhurley/atom-glsl-preview/2c9d19fc/examples/frag.glsl")
 ```
 
+It can be attached to an existing canvas:
+
+```javascript
+var shaderCanvas = new ShaderCanvas({
+  domElement: document.getElementById("my-canvas"),
+});
+```
+
 A full example can be found in `example/`.
 
 ## Uniforms
