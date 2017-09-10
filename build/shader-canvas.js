@@ -182,11 +182,10 @@ class ShaderCanvas {
     this.mesh = null;
     this.geometry = new __WEBPACK_IMPORTED_MODULE_0_three__["d" /* PlaneBufferGeometry */](2, 2);
 
-    this._swapMaterial = Object(__WEBPACK_IMPORTED_MODULE_1_underscore__["debounce"])(this._swapMaterial.bind(this), 250);
-
     this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
 
+    this._swapMaterial = this._swapMaterial.bind(this);
     this._update = this._update.bind(this);
     requestAnimationFrame(this._update);
   }

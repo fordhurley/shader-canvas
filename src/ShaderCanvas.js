@@ -1,5 +1,5 @@
 import {WebGLRenderer, Scene, OrthographicCamera, Clock, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} from "three";
-import {debounce, difference} from "underscore";
+import {difference} from "underscore";
 
 function parseLineNumberFromErrorMsg(msg) {
   const match = /ERROR: \d+:(\d+)/.exec(msg);
@@ -91,11 +91,10 @@ export default class ShaderCanvas {
     this.mesh = null;
     this.geometry = new PlaneBufferGeometry(2, 2);
 
-    this._swapMaterial = debounce(this._swapMaterial.bind(this), 250);
-
     this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
 
+    this._swapMaterial = this._swapMaterial.bind(this);
     this._update = this._update.bind(this);
     requestAnimationFrame(this._update);
   }
