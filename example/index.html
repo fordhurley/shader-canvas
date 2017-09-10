@@ -4,35 +4,41 @@
     <script src="/shader-canvas.js"></script>
     <style>
       body {
-        margin: 0;
-        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+      }
+      canvas {
+        margin: 2em;
       }
     </style>
+
   </head>
   <body>
     <script>
-      var shaderCanvas = new ShaderCanvas();
-      document.body.appendChild(shaderCanvas.domElement);
+      var size = 400;
 
-      var urls = [
-        "example.glsl",
-        "https://raw.githubusercontent.com/fordhurley/atom-glsl-preview/master/examples/frag.glsl",
-      ];
-      var index = 0;
-      shaderCanvas.loadShader(urls[index]);
+      var example1 = new ShaderCanvas();
+      document.body.appendChild(example1.domElement);
+      example1.setShader(`
+        void main() {
+          vec2 uv = gl_FragCoord.xy/iResolution.xy; // [0, 1]
+          float num = 16.0; // number of squares along an edge
+          vec2 i = floor(uv*num); // integer grid
+          float v = mod(i.x + i.y, 2.0); // 0 or 1
+          gl_FragColor = vec4(v, v, 0, 1.0); // black and yellow
+        }
+      `);
+      example1.setSize(size, size);
 
-      shaderCanvas.domElement.addEventListener("click", function() {
-        index++;
-        index %= urls.length;
-        shaderCanvas.loadShader(urls[index]);
-      });
+      var example2 = new ShaderCanvas();
+      document.body.appendChild(example2.domElement);
+      example2.loadShader("example.glsl");
+      example2.setSize(size, size);
 
-
-      shaderCanvas.setSize(window.innerWidth, window.innerHeight);
-
-      window.addEventListener("resize", function() {
-        shaderCanvas.setSize(window.innerWidth, window.innerHeight);
-      });
+      var example3 = new ShaderCanvas();
+      document.body.appendChild(example3.domElement);
+      example3.loadShader("https://raw.githubusercontent.com/fordhurley/atom-glsl-preview/master/examples/frag.glsl");
+      example3.setSize(size, size);
     </script>
   </body>
 </html>
