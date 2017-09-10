@@ -156,8 +156,6 @@ export default class ShaderCanvas {
 
     const onLoad = () => {
       this.onTextureLoad();
-      // TODO: might be good to swap the mesh immediately, whether or not it loads
-      setTimeout(this._swapMaterial, 100);
     };
 
     const onError = () => {
@@ -181,8 +179,6 @@ export default class ShaderCanvas {
     this.uniforms[textureId].value.needsUpdate = true;
 
     delete this.uniforms[textureId];
-
-    this.mesh.material.needsUpdate = true;
   }
 
   dispose() {
