@@ -50,7 +50,14 @@ const defaultUniforms = `
 `;
 
 export default class ShaderCanvas {
-  constructor() {
+  constructor(options) {
+    options = options || {};
+
+    this.domElement = options.domElement;
+    if (!this.domElement) {
+      this.domElement = document.createElement("canvas");
+    }
+
     // Override these for different behavior:
     this.buildTextureURL = function(filePath) {
       return filePath;
@@ -64,9 +71,8 @@ export default class ShaderCanvas {
       throw new Error("error loading texture " + textureURL);
     };
 
-    this.renderer = new WebGLRenderer();
+    this.renderer = new WebGLRenderer({canvas: this.domElement});
     this.renderer.setPixelRatio(devicePixelRatio());
-    this.domElement = this.renderer.domElement;
 
     this.scene = new Scene();
 
