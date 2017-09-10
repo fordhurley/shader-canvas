@@ -1,6 +1,6 @@
 {
   "name": "shader-canvas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Run GLSL shader in a canvas",
   "main": "build/shader-canvas.js",
   "license": "MIT",

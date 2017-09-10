@@ -1,5 +1,5 @@
 import {WebGLRenderer, Scene, OrthographicCamera, Clock, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} from "three";
-import {debounce, difference} from "underscore";
+import {difference} from "underscore";
 
 function parseLineNumberFromErrorMsg(msg) {
   const match = /ERROR: \d+:(\d+)/.exec(msg);
@@ -91,11 +91,10 @@ export default class ShaderCanvas {
     this.mesh = null;
     this.geometry = new PlaneBufferGeometry(2, 2);
 
-    this._swapMesh = debounce(this._swapMesh.bind(this), 250);
-
     this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
 
+    this._swapMaterial = this._swapMaterial.bind(this);
     this._update = this._update.bind(this);
     requestAnimationFrame(this._update);
   }
@@ -107,7 +106,7 @@ export default class ShaderCanvas {
     oldTextures.forEach(texture => this.removeTexture(texture.textureId));
     newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
     this.fragShader = defaultUniforms + source;
-    this._swapMesh();
+    this._swapMaterial();
   }
 
   loadShader(url) {
@@ -152,7 +151,7 @@ export default class ShaderCanvas {
     const onLoad = () => {
       this.onTextureLoad();
       // TODO: might be good to swap the mesh immediately, whether or not it loads
-      setTimeout(this._swapMesh, 100);
+      setTimeout(this._swapMaterial, 100);
     };
 
     const onError = () => {
@@ -187,35 +186,33 @@ export default class ShaderCanvas {
     // TODO: dispose of the THREE stuff
   }
 
-  _swapMesh() {
-    const material = new ShaderMaterial({
+  _swapMaterial() {
+    if (!this.mesh) {
+      this.mesh = new Mesh(this.geometry);
+    }
+
+    this.mesh.material.dispose();
+
+    this.mesh.material = new ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader,
       fragmentShader: this.fragShader,
     });
 
-    const tmpMesh = new Mesh(this.geometry, material);
-
-    this.scene.add(tmpMesh);
+    this.scene.add(this.mesh);
 
     setTimeout(() => {
       let diagnostics;
-      if (tmpMesh.material.program) {
-        diagnostics = tmpMesh.material.program.diagnostics;
+      if (this.mesh.material.program) {
+        diagnostics = this.mesh.material.program.diagnostics;
       }
       if (diagnostics && !diagnostics.runnable) {
+        this.mesh.material.dispose();
+        this.scene.remove(this.mesh);
         const msg = diagnostics.fragmentShader.log;
         this.onShaderError(msg, parseLineNumberFromErrorMsg(msg));
-        tmpMesh.material.dispose();
-        this.scene.remove(tmpMesh);
       } else {
         this.onShaderLoad();
-        if (this.mesh) {
-          // console.log("removing old mesh")
-          this.mesh.material.dispose();
-          this.scene.remove(this.mesh);
-        }
-        this.mesh = tmpMesh;
       }
     }, 100);
   }
