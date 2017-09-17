@@ -192,7 +192,7 @@ class ShaderCanvas {
     // Don't need to remove this, because we'll just remove the element.
 
     this._update = this._update.bind(this);
-    requestAnimationFrame(this._update);
+    this._update();
   }
 
   setShader(source) {
@@ -293,7 +293,7 @@ class ShaderCanvas {
   }
 
   dispose() {
-    cancelAnimationFrame(this._update);
+    cancelAnimationFrame(this.animationFrameRequest);
     this.domElement = null;
 
     // TODO: dispose of the THREE stuff
@@ -310,7 +310,7 @@ class ShaderCanvas {
 
   _update() {
     if (this.paused) { return; }
-    requestAnimationFrame(this._update);
+    this.animationFrameRequest = requestAnimationFrame(this._update);
     this.render();
   }
 
