@@ -95,8 +95,7 @@ export default class ShaderCanvas {
 
     this.textures = [];
 
-    this.mesh = null;
-    this.geometry = new PlaneBufferGeometry(2, 2);
+    this.mesh = new Mesh(new PlaneBufferGeometry(2, 2));
 
     this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
@@ -190,10 +189,6 @@ export default class ShaderCanvas {
   }
 
   _swapMaterial() {
-    if (!this.mesh) {
-      this.mesh = new Mesh(this.geometry);
-    }
-
     this.mesh.material.dispose();
 
     this.mesh.material = new ShaderMaterial({
