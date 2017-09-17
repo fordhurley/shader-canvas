@@ -39,6 +39,11 @@
       document.body.appendChild(example3.domElement);
       example3.loadShader("https://raw.githubusercontent.com/fordhurley/atom-glsl-preview/master/examples/frag.glsl");
       example3.setSize(size, size);
+
+      example3.domElement.addEventListener("click", function(e) {
+        e.preventDefault();
+        example3.togglePause();
+      });
     </script>
   </body>
 </html>

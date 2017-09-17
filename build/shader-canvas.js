@@ -173,6 +173,7 @@ class ShaderCanvas {
     this.renderer.render(this.scene, this.camera);
 
     this.clock = new __WEBPACK_IMPORTED_MODULE_0_three__["a" /* Clock */](true);
+    this.paused = false;
 
     this.uniforms = {
       iGlobalTime: {value: 0},
@@ -320,9 +321,14 @@ class ShaderCanvas {
   }
 
   _update() {
-    if (this.IS_DESTROYED) { return; }
+    if (this.paused) { return; }
     requestAnimationFrame(this._update);
     this.render();
+  }
+
+  togglePause() {
+    this.paused = !this.paused;
+    this._update();
   }
 }
 /* harmony export (immutable) */ __webpack_exports__["default"] = ShaderCanvas;

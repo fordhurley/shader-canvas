@@ -82,6 +82,7 @@ export default class ShaderCanvas {
     this.renderer.render(this.scene, this.camera);
 
     this.clock = new Clock(true);
+    this.paused = false;
 
     this.uniforms = {
       iGlobalTime: {value: 0},
@@ -229,8 +230,13 @@ export default class ShaderCanvas {
   }
 
   _update() {
-    if (this.IS_DESTROYED) { return; }
+    if (this.paused) { return; }
     requestAnimationFrame(this._update);
     this.render();
+  }
+
+  togglePause() {
+    this.paused = !this.paused;
+    this._update();
   }
 };
