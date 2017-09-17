@@ -162,31 +162,31 @@ class ShaderCanvas {
       throw new Error("error loading texture " + textureURL);
     };
 
-    this.renderer = new __WEBPACK_IMPORTED_MODULE_0_three__["i" /* WebGLRenderer */]({canvas: this.domElement});
+    this.renderer = new __WEBPACK_IMPORTED_MODULE_0_three__["h" /* WebGLRenderer */]({canvas: this.domElement});
     this.renderer.setPixelRatio(devicePixelRatio());
 
-    this.scene = new __WEBPACK_IMPORTED_MODULE_0_three__["e" /* Scene */]();
+    this.scene = new __WEBPACK_IMPORTED_MODULE_0_three__["d" /* Scene */]();
 
-    this.camera = new __WEBPACK_IMPORTED_MODULE_0_three__["c" /* OrthographicCamera */](-1, 1, 1, -1, 0.1, 10);
+    this.camera = new __WEBPACK_IMPORTED_MODULE_0_three__["b" /* OrthographicCamera */](-1, 1, 1, -1, 0.1, 10);
     this.camera.position.z = 1;
 
     this.renderer.render(this.scene, this.camera);
 
-    this.clock = new __WEBPACK_IMPORTED_MODULE_0_three__["a" /* Clock */](true);
+    this.startTimeSeconds = performance.now()/1000;
     this.paused = false;
 
     this.uniforms = {
       iGlobalTime: {value: 0},
-      iResolution: {value: new __WEBPACK_IMPORTED_MODULE_0_three__["h" /* Vector2 */]()},
-      iMouse: {value: new __WEBPACK_IMPORTED_MODULE_0_three__["h" /* Vector2 */]()},
+      iResolution: {value: new __WEBPACK_IMPORTED_MODULE_0_three__["g" /* Vector2 */]()},
+      iMouse: {value: new __WEBPACK_IMPORTED_MODULE_0_three__["g" /* Vector2 */]()},
       u_time: {value: 0},
-      u_resolution: {value: new __WEBPACK_IMPORTED_MODULE_0_three__["h" /* Vector2 */]()},
-      u_mouse: {value: new __WEBPACK_IMPORTED_MODULE_0_three__["h" /* Vector2 */]()},
+      u_resolution: {value: new __WEBPACK_IMPORTED_MODULE_0_three__["g" /* Vector2 */]()},
+      u_mouse: {value: new __WEBPACK_IMPORTED_MODULE_0_three__["g" /* Vector2 */]()},
     };
 
     this.textures = [];
 
-    this.mesh = new __WEBPACK_IMPORTED_MODULE_0_three__["b" /* Mesh */](new __WEBPACK_IMPORTED_MODULE_0_three__["d" /* PlaneBufferGeometry */](2, 2));
+    this.mesh = new __WEBPACK_IMPORTED_MODULE_0_three__["a" /* Mesh */](new __WEBPACK_IMPORTED_MODULE_0_three__["c" /* PlaneBufferGeometry */](2, 2));
 
     this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
@@ -203,7 +203,7 @@ class ShaderCanvas {
     newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
 
     this.mesh.material.dispose(); // dispose of the old one
-    this.mesh.material = new __WEBPACK_IMPORTED_MODULE_0_three__["f" /* ShaderMaterial */]({
+    this.mesh.material = new __WEBPACK_IMPORTED_MODULE_0_three__["e" /* ShaderMaterial */]({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
       fragmentShader: defaultUniforms + source,
@@ -255,10 +255,12 @@ class ShaderCanvas {
     this.renderer.setSize(width, height);
   }
 
-  render() {
-    this.uniforms.iGlobalTime.value = this.clock.getElapsedTime();
-    this.uniforms.u_time.value = this.uniforms.iGlobalTime.value;
+  setTime(timeSeconds) {
+    this.uniforms.iGlobalTime.value = timeSeconds;
+    this.uniforms.u_time.value = timeSeconds;
+  }
 
+  render() {
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -273,7 +275,7 @@ class ShaderCanvas {
       this.onTextureError(textureURL);
     };
 
-    const texture = new __WEBPACK_IMPORTED_MODULE_0_three__["g" /* TextureLoader */]().load(textureURL, onLoad, null, onError);
+    const texture = new __WEBPACK_IMPORTED_MODULE_0_three__["f" /* TextureLoader */]().load(textureURL, onLoad, null, onError);
     this.uniforms[textureId] = {value: texture};
     this.textures.push({textureURL, textureId});
   }
@@ -311,6 +313,7 @@ class ShaderCanvas {
   _update() {
     if (this.paused) { return; }
     this.animationFrameRequest = requestAnimationFrame(this._update);
+    this.setTime((performance.now() / 1000) - this.startTimeSeconds);
     this.render();
   }
 
@@ -330,21 +333,21 @@ class ShaderCanvas {
 "use strict";
 /* unused harmony export WebGLRenderTargetCube */
 /* unused harmony export WebGLRenderTarget */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "i", function() { return WebGLRenderer; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "h", function() { return WebGLRenderer; });
 /* unused harmony export ShaderLib */
 /* unused harmony export UniformsLib */
 /* unused harmony export UniformsUtils */
 /* unused harmony export ShaderChunk */
 /* unused harmony export FogExp2 */
 /* unused harmony export Fog */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return Scene; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return Scene; });
 /* unused harmony export LensFlare */
 /* unused harmony export Sprite */
 /* unused harmony export LOD */
 /* unused harmony export SkinnedMesh */
 /* unused harmony export Skeleton */
 /* unused harmony export Bone */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return Mesh; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Mesh; });
 /* unused harmony export LineSegments */
 /* unused harmony export LineLoop */
 /* unused harmony export Line */
@@ -360,7 +363,7 @@ class ShaderCanvas {
 /* unused harmony export CompressedTextureLoader */
 /* unused harmony export DataTextureLoader */
 /* unused harmony export CubeTextureLoader */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "g", function() { return TextureLoader; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "f", function() { return TextureLoader; });
 /* unused harmony export ObjectLoader */
 /* unused harmony export MaterialLoader */
 /* unused harmony export BufferGeometryLoader */
@@ -385,7 +388,7 @@ class ShaderCanvas {
 /* unused harmony export Light */
 /* unused harmony export StereoCamera */
 /* unused harmony export PerspectiveCamera */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return OrthographicCamera; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "b", function() { return OrthographicCamera; });
 /* unused harmony export CubeCamera */
 /* unused harmony export ArrayCamera */
 /* unused harmony export Camera */
@@ -421,7 +424,7 @@ class ShaderCanvas {
 /* unused harmony export Raycaster */
 /* unused harmony export Layers */
 /* unused harmony export EventDispatcher */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return Clock; });
+/* unused harmony export Clock */
 /* unused harmony export QuaternionLinearInterpolant */
 /* unused harmony export LinearInterpolant */
 /* unused harmony export DiscreteInterpolant */
@@ -443,7 +446,7 @@ class ShaderCanvas {
 /* unused harmony export Euler */
 /* unused harmony export Vector4 */
 /* unused harmony export Vector3 */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "h", function() { return Vector2; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "g", function() { return Vector2; });
 /* unused harmony export Quaternion */
 /* unused harmony export Color */
 /* unused harmony export ImmediateRenderObject */
@@ -508,7 +511,7 @@ class ShaderCanvas {
 /* unused harmony export RingGeometry */
 /* unused harmony export RingBufferGeometry */
 /* unused harmony export PlaneGeometry */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "d", function() { return PlaneBufferGeometry; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "c", function() { return PlaneBufferGeometry; });
 /* unused harmony export LatheGeometry */
 /* unused harmony export LatheBufferGeometry */
 /* unused harmony export ShapeGeometry */
@@ -527,7 +530,7 @@ class ShaderCanvas {
 /* unused harmony export ShadowMaterial */
 /* unused harmony export SpriteMaterial */
 /* unused harmony export RawShaderMaterial */
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "f", function() { return ShaderMaterial; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "e", function() { return ShaderMaterial; });
 /* unused harmony export PointsMaterial */
 /* unused harmony export MeshPhysicalMaterial */
 /* unused harmony export MeshStandardMaterial */

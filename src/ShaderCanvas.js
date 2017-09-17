@@ -1,4 +1,4 @@
-import {WebGLRenderer, Scene, OrthographicCamera, Clock, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} from "three";
+import {WebGLRenderer, Scene, OrthographicCamera, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} from "three";
 import {difference} from "underscore";
 
 function parseLineNumberFromErrorMsg(msg) {
@@ -81,7 +81,7 @@ export default class ShaderCanvas {
 
     this.renderer.render(this.scene, this.camera);
 
-    this.clock = new Clock(true);
+    this.startTimeSeconds = performance.now()/1000;
     this.paused = false;
 
     this.uniforms = {
@@ -164,10 +164,12 @@ export default class ShaderCanvas {
     this.renderer.setSize(width, height);
   }
 
-  render() {
-    this.uniforms.iGlobalTime.value = this.clock.getElapsedTime();
-    this.uniforms.u_time.value = this.uniforms.iGlobalTime.value;
+  setTime(timeSeconds) {
+    this.uniforms.iGlobalTime.value = timeSeconds;
+    this.uniforms.u_time.value = timeSeconds;
+  }
 
+  render() {
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -220,6 +222,7 @@ export default class ShaderCanvas {
   _update() {
     if (this.paused) { return; }
     this.animationFrameRequest = requestAnimationFrame(this._update);
+    this.setTime((performance.now() / 1000) - this.startTimeSeconds);
     this.render();
   }
 
