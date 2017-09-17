@@ -186,13 +186,11 @@ class ShaderCanvas {
 
     this.textures = [];
 
-    this.mesh = null;
-    this.geometry = new __WEBPACK_IMPORTED_MODULE_0_three__["d" /* PlaneBufferGeometry */](2, 2);
+    this.mesh = new __WEBPACK_IMPORTED_MODULE_0_three__["b" /* Mesh */](new __WEBPACK_IMPORTED_MODULE_0_three__["d" /* PlaneBufferGeometry */](2, 2));
 
     this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
 
-    this._swapMaterial = this._swapMaterial.bind(this);
     this._update = this._update.bind(this);
     requestAnimationFrame(this._update);
   }
@@ -203,8 +201,29 @@ class ShaderCanvas {
     const newTextures = Object(__WEBPACK_IMPORTED_MODULE_1_underscore__["difference"])(parsedTextures, this.textures);
     oldTextures.forEach(texture => this.removeTexture(texture.textureId));
     newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
-    this.fragShader = defaultUniforms + source;
-    this._swapMaterial();
+
+    this.mesh.material.dispose(); // dispose of the old one
+    this.mesh.material = new __WEBPACK_IMPORTED_MODULE_0_three__["f" /* ShaderMaterial */]({
+      uniforms: this.uniforms,
+      vertexShader: vertexShader,
+      fragmentShader: defaultUniforms + source,
+    });
+
+    this.scene.add(this.mesh); // idempotent
+
+    this.render(); // to force an error
+    let diagnostics;
+    if (this.mesh.material.program) {
+      diagnostics = this.mesh.material.program.diagnostics;
+    }
+    if (diagnostics && !diagnostics.runnable) {
+      this.mesh.material.dispose();
+      this.scene.remove(this.mesh);
+      const msg = diagnostics.fragmentShader.log;
+      this.onShaderError(msg, parseLineNumberFromErrorMsg(msg));
+    } else {
+      this.onShaderLoad();
+    }
   }
 
   loadShader(url) {
@@ -278,37 +297,6 @@ class ShaderCanvas {
     this.domElement = null;
 
     // TODO: dispose of the THREE stuff
-  }
-
-  _swapMaterial() {
-    if (!this.mesh) {
-      this.mesh = new __WEBPACK_IMPORTED_MODULE_0_three__["b" /* Mesh */](this.geometry);
-    }
-
-    this.mesh.material.dispose();
-
-    this.mesh.material = new __WEBPACK_IMPORTED_MODULE_0_three__["f" /* ShaderMaterial */]({
-      uniforms: this.uniforms,
-      vertexShader,
-      fragmentShader: this.fragShader,
-    });
-
-    this.scene.add(this.mesh);
-
-    setTimeout(() => {
-      let diagnostics;
-      if (this.mesh.material.program) {
-        diagnostics = this.mesh.material.program.diagnostics;
-      }
-      if (diagnostics && !diagnostics.runnable) {
-        this.mesh.material.dispose();
-        this.scene.remove(this.mesh);
-        const msg = diagnostics.fragmentShader.log;
-        this.onShaderError(msg, parseLineNumberFromErrorMsg(msg));
-      } else {
-        this.onShaderLoad();
-      }
-    }, 100);
   }
 
   _onMouseMove() {
