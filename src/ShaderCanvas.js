@@ -104,7 +104,7 @@ export default class ShaderCanvas {
     this._update();
   }
 
-  setShader(source) {
+  setShader(source, includeDefaultUniforms = true) {
     const parsedTextures = parseTextureDirectives(source);
     const oldTextures = difference(this.textures, parsedTextures);
     const newTextures = difference(parsedTextures, this.textures);
@@ -115,7 +115,7 @@ export default class ShaderCanvas {
     this.mesh.material = new ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
-      fragmentShader: defaultUniforms + source,
+      fragmentShader: includeDefaultUniforms ? defaultUniforms + source : source,
     });
 
     this.scene.add(this.mesh); // idempotent
