@@ -1,17 +1,30 @@
 import {WebGLRenderer, Scene, OrthographicCamera, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} from "three";
 import {difference} from "underscore";
 
-function parseLineNumberFromErrorMsg(msg) {
-  const match = /ERROR: \d+:(\d+)/.exec(msg);
-  let lineNumber = null;
-  if (match && match[1]) {
-    lineNumber = parseInt(match[1], 10);
+function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms) {
+  let out = [];
+  let errorRegex = /^ERROR: \d+:(\d+).*$/mg, match;
+
+  while (match = errorRegex.exec(msg)) {
+    let errorLineNumber = -1;
+    let lineNumber = parseInt(match[1], 10);
+    if (lineNumber !== null) {
+      const prologueLines = prefix.split(/\r\n|\r|\n/).length;
+      const defaultUniformLines = includeDefaultUniforms ? defaultUniforms.split(/\r\n|\r|\n/).length - 1 : 0;
+      const glslifyLineNumber = fragmentShader.split(/\r\n|\r|\n/).findIndex(s => s == "#define GLSLIFY 1") - defaultUniformLines + 1;
+
+      errorLineNumber = lineNumber - prologueLines - defaultUniformLines + 1;
+
+      if (errorLineNumber >= glslifyLineNumber) {
+        errorLineNumber -= 1;
+      }
+    }
+    out.push({
+      "lineNumber": errorLineNumber,
+      "text": match[0]
+    });
   }
-  if (lineNumber !== null) {
-    const prologueLines = 107; // lines added before the user's shader code, by us or by THREE
-    return lineNumber - prologueLines;
-  }
-  return null;
+  return out;
 }
 
 function parseTextureDirectives(source) {
@@ -63,9 +76,10 @@ export default class ShaderCanvas {
       return filePath;
     };
     this.onShaderLoad = function() {};
-    this.onShaderError = function(msg, lineNumber) {
-      throw new Error("shader error " + msg);
-    };
+    this.onShaderError = messages => {
+      const errorOutput = messages.map(message => message.text.replace(/(\w+: )\d+:\d+(.*)/, `$1${message.lineNumber}:1$2`)).join('\n');
+      throw new Error("shader error " + errorOutput);
+    }
     this.onTextureLoad = function() {};
     this.onTextureError = function(textureURL) {
       throw new Error("error loading texture " + textureURL);
@@ -105,6 +119,7 @@ export default class ShaderCanvas {
   }
 
   setShader(source, includeDefaultUniforms = true) {
+    const fragmentShader = includeDefaultUniforms ? defaultUniforms + source : source;
     const parsedTextures = parseTextureDirectives(source);
     const oldTextures = difference(this.textures, parsedTextures);
     const newTextures = difference(parsedTextures, this.textures);
@@ -115,7 +130,7 @@ export default class ShaderCanvas {
     this.mesh.material = new ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
-      fragmentShader: includeDefaultUniforms ? defaultUniforms + source : source,
+      fragmentShader: fragmentShader,
     });
 
     this.scene.add(this.mesh); // idempotent
@@ -129,7 +144,8 @@ export default class ShaderCanvas {
       this.mesh.material.dispose();
       this.scene.remove(this.mesh);
       const msg = diagnostics.fragmentShader.log;
-      this.onShaderError(msg, parseLineNumberFromErrorMsg(msg));
+      const prefix = diagnostics.fragmentShader.prefix;
+      this.onShaderError(parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms))
     } else {
       this.onShaderLoad();
     }
