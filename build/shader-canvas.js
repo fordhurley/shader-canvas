@@ -94,11 +94,11 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms) {
   let out = [];
-  let errorRegex = /^ERROR: \d+:(\d+).*$/mg, match;
+  let errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg, match;
 
   while (match = errorRegex.exec(msg)) {
     let errorLineNumber = -1;
-    let lineNumber = parseInt(match[1], 10);
+    let lineNumber = parseInt(match[2], 10);
     if (lineNumber !== null) {
       const prologueLines = prefix.split(/\r\n|\r|\n/).length;
       const defaultUniformLines = includeDefaultUniforms ? defaultUniforms.split(/\r\n|\r|\n/).length - 1 : 0;
@@ -112,7 +112,7 @@ function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms)
     }
     out.push({
       "lineNumber": errorLineNumber,
-      "text": match[0]
+      "text": `${match[1]}${errorLineNumber}:1${match[3]}`
     });
   }
   return out;
@@ -168,8 +168,8 @@ class ShaderCanvas {
     };
     this.onShaderLoad = function() {};
     this.onShaderError = messages => {
-      const errorOutput = messages.map(message => message.text.replace(/(\w+: )\d+:\d+(.*)/, `$1${message.lineNumber}:1$2`)).join('\n');
-      throw new Error("shader error " + errorOutput);
+      const errorOutput = messages.map(message => message.text).join('\n');
+      throw new Error("shader error:\n" + errorOutput);
     }
     this.onTextureLoad = function() {};
     this.onTextureError = function(textureURL) {
