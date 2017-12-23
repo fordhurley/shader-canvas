@@ -65,7 +65,7 @@ uniform sampler2D withURL; // https://example.com/textures/blah.bmp
 ```
 
 If you need to modify the path before attempting to load the texture, override
-the `.buildTextureURL(filePath)` method of
+the `.buildTextureURL(filePath)` method of the ShaderCanvas instance.
 
 
 ## Handling Errors
@@ -74,7 +74,7 @@ Override the following methods to handle errors and successes.
 
 ```javascript
 .onShaderLoad()
-.onShaderError(msg, lineNumber)
+.onShaderError(messages) // messages is an array of {text, lineNumber} objects
 .onTextureLoad()
 .onTextureError(textureURL)
 ```
