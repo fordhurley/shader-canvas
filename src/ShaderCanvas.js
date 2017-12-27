@@ -3,9 +3,9 @@ import {difference} from "underscore";
 
 function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms) {
   let out = [];
-  let errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg, match;
-
-  while (match = errorRegex.exec(msg)) {
+  let errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
+  let match = errorRegex.exec(msg);
+  while (match) {
     let errorLineNumber = -1;
     let lineNumber = parseInt(match[2], 10);
     if (lineNumber !== null) {
@@ -21,8 +21,9 @@ function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms)
     }
     out.push({
       "lineNumber": errorLineNumber,
-      "text": `${match[1]}${errorLineNumber}:1${match[3]}`
+      "text": `${match[1]}${errorLineNumber}:1${match[3]}`,
     });
+    errorRegex.exec(msg);
   }
   return out;
 }
@@ -79,7 +80,7 @@ export default class ShaderCanvas {
     this.onShaderError = messages => {
       const errorOutput = messages.map(message => message.text).join('\n');
       throw new Error("shader error:\n" + errorOutput);
-    }
+    };
     this.onTextureLoad = function() {};
     this.onTextureError = function(textureURL) {
       throw new Error("error loading texture " + textureURL);
@@ -145,7 +146,7 @@ export default class ShaderCanvas {
       this.scene.remove(this.mesh);
       const msg = diagnostics.fragmentShader.log;
       const prefix = diagnostics.fragmentShader.prefix;
-      this.onShaderError(parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms))
+      this.onShaderError(parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms));
     } else {
       this.onShaderLoad();
     }
@@ -246,4 +247,4 @@ export default class ShaderCanvas {
     this.paused = !this.paused;
     this._update();
   }
-};
+}
