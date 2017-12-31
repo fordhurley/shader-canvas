@@ -95,14 +95,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms) {
   let out = [];
   let errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
+  let newLineRegex = /\r?\n/;
   let match = errorRegex.exec(msg);
   while (match) {
     let errorLineNumber = -1;
     let lineNumber = parseInt(match[2], 10);
     if (lineNumber !== null) {
-      const prologueLines = prefix.split(/\r\n|\r|\n/).length;
-      const defaultUniformLines = includeDefaultUniforms ? defaultUniforms.split(/\r\n|\r|\n/).length - 1 : 0;
-      const glslifyLineNumber = fragmentShader.split(/\r\n|\r|\n/).findIndex(s => s == "#define GLSLIFY 1") - defaultUniformLines + 1;
+      const prologueLines = prefix.split(newLineRegex).length;
+      const defaultUniformLines = includeDefaultUniforms ? defaultUniforms.split(newLineRegex).length - 1 : 0;
+      const glslifyLineNumber = fragmentShader.split(newLineRegex).findIndex(s => s == "#define GLSLIFY 1") - defaultUniformLines + 1;
 
       errorLineNumber = lineNumber - prologueLines - defaultUniformLines + 1;
 
@@ -114,7 +115,7 @@ function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms)
       "lineNumber": errorLineNumber,
       "text": `${match[1]}${errorLineNumber}:1${match[3]}`,
     });
-    errorRegex.exec(msg);
+    match = errorRegex.exec(msg);
   }
   return out;
 }
@@ -219,7 +220,8 @@ class ShaderCanvas {
     oldTextures.forEach(texture => this.removeTexture(texture.textureId));
     newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
 
-    this.mesh.material.dispose(); // dispose of the old one
+    const prevMaterial = this.mesh.material;
+
     this.mesh.material = new __WEBPACK_IMPORTED_MODULE_0_three__["e" /* ShaderMaterial */]({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
@@ -235,11 +237,13 @@ class ShaderCanvas {
     }
     if (diagnostics && !diagnostics.runnable) {
       this.mesh.material.dispose();
-      this.scene.remove(this.mesh);
+      this.mesh.material = prevMaterial;
+
       const msg = diagnostics.fragmentShader.log;
       const prefix = diagnostics.fragmentShader.prefix;
       this.onShaderError(parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms));
     } else {
+      prevMaterial.dispose();
       this.onShaderLoad();
     }
   }
