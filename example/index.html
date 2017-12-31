@@ -3,19 +3,36 @@
     <title>shader-canvas example</title>
     <script src="/shader-canvas.js"></script>
     <style>
+      html {
+        box-sizing: border-box;
+      }
+      *, *:before, *:after {
+        box-sizing: inherit;
+      }
       body {
         display: flex;
         flex-wrap: wrap;
       }
-      canvas {
+      body > * {
         margin: 2em;
+      }
+      .placeholder {
+        background-color: gray;
+        text-align: center;
+        padding: 2em;
+      }
+      .success {
+        background-color: green;
+      }
+      .error {
+        background-color: red;
       }
     </style>
 
   </head>
   <body>
     <script>
-      var size = 400;
+      var size = 300;
 
       var example1 = new ShaderCanvas();
       document.body.appendChild(example1.domElement);
@@ -44,6 +61,52 @@
         e.preventDefault();
         example3.togglePause();
       });
+
+      // Test the error parsing:
+      var placeholder = document.createElement("div");
+      placeholder.classList.add("placeholder");
+      placeholder.style.width = size+"px";
+      placeholder.style.height = size+"px";
+      document.body.appendChild(placeholder);
+      var example4 = new ShaderCanvas();
+      example4.onShaderError = function(messages) {
+        var expectedNumErrors = 1;
+        var numErrors = messages.length;
+        if (numErrors !== expectedNumErrors) {
+          placeholder.textContent = `Expected ${expectedNumErrors} shader error, got ${numErrors}`;
+          placeholder.classList.add("error");
+          return;
+        }
+
+        var expectedLineNumber = 2;
+        var lineNumber = messages[0].lineNumber;
+        if (lineNumber !== expectedLineNumber) {
+          placeholder.textContent = `Expected error on line ${expectedLineNumber}, got ${lineNumber}`;
+          placeholder.classList.add("error");
+          return;
+        }
+
+        var expectedText = "ERROR: 2:1: '=' : cannot convert from 'const int' to 'highp float'";
+        var text = messages[0].text;
+        if (text !== expectedText) {
+          placeholder.textContent = `Expected error "${expectedText}", got "${text}"`;
+          placeholder.classList.add("error");
+          return;
+        }
+
+        placeholder.textContent = "Shader errored as expected";
+        placeholder.classList.add("success");
+      };
+      example4.onShaderLoad = function() {
+        placeholder.textContent = "Expected shader error";
+        placeholder.classList.add("error");
+      };
+      example4.setShader(`
+        void main() {
+          float a = 1; // error
+          gl_FragColor = vec4(a, 0.0, 1.0, 1.0);
+        }
+      `);
     </script>
   </body>
 </html>
