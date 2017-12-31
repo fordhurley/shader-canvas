@@ -129,7 +129,8 @@ export default class ShaderCanvas {
     oldTextures.forEach(texture => this.removeTexture(texture.textureId));
     newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
 
-    this.mesh.material.dispose(); // dispose of the old one
+    const prevMaterial = this.mesh.material;
+
     this.mesh.material = new ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
@@ -145,11 +146,13 @@ export default class ShaderCanvas {
     }
     if (diagnostics && !diagnostics.runnable) {
       this.mesh.material.dispose();
-      this.scene.remove(this.mesh);
+      this.mesh.material = prevMaterial;
+
       const msg = diagnostics.fragmentShader.log;
       const prefix = diagnostics.fragmentShader.prefix;
       this.onShaderError(parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms));
     } else {
+      prevMaterial.dispose();
       this.onShaderLoad();
     }
   }
