@@ -4,14 +4,15 @@ import {difference} from "underscore";
 function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms) {
   let out = [];
   let errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
+  let newLineRegex = /\r?\n/;
   let match = errorRegex.exec(msg);
   while (match) {
     let errorLineNumber = -1;
     let lineNumber = parseInt(match[2], 10);
     if (lineNumber !== null) {
-      const prologueLines = prefix.split(/\r\n|\r|\n/).length;
-      const defaultUniformLines = includeDefaultUniforms ? defaultUniforms.split(/\r\n|\r|\n/).length - 1 : 0;
-      const glslifyLineNumber = fragmentShader.split(/\r\n|\r|\n/).findIndex(s => s == "#define GLSLIFY 1") - defaultUniformLines + 1;
+      const prologueLines = prefix.split(newLineRegex).length;
+      const defaultUniformLines = includeDefaultUniforms ? defaultUniforms.split(newLineRegex).length - 1 : 0;
+      const glslifyLineNumber = fragmentShader.split(newLineRegex).findIndex(s => s == "#define GLSLIFY 1") - defaultUniformLines + 1;
 
       errorLineNumber = lineNumber - prologueLines - defaultUniformLines + 1;
 
