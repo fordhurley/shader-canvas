@@ -188,6 +188,7 @@ class ShaderCanvas {
     this.renderer.render(this.scene, this.camera);
 
     this.startTimeSeconds = performance.now()/1000;
+    this.pausedTimeSeconds = 0;
     this.paused = false;
 
     this.uniforms = {
@@ -336,6 +337,13 @@ class ShaderCanvas {
 
   togglePause() {
     this.paused = !this.paused;
+    if (!this.paused) {
+      // Unpaused now, so move our start time up to account for the time we
+      // spent paused:
+      this.startTimeSeconds += (performance.now() / 1000) - this.pausedTimeSeconds;
+    } else {
+      this.pausedTimeSeconds = performance.now() / 1000;
+    }
     this._update();
   }
 }
