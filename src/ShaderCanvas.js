@@ -23,7 +23,7 @@ function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms)
       "lineNumber": errorLineNumber,
       "text": `${match[1]}${errorLineNumber}:1${match[3]}`,
     });
-    errorRegex.exec(msg);
+    match = errorRegex.exec(msg);
   }
   return out;
 }
