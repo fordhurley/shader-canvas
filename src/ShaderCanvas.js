@@ -2,22 +2,7 @@ import {WebGLRenderer, Scene, OrthographicCamera, Vector2, PlaneBufferGeometry, 
 import {difference} from "underscore";
 
 import parseErrorMessages from "./parse-error-messages";
-
-function parseTextureDirectives(source) {
-  // Looking for lines of the form:
-  // uniform sampler2D foo; // ../textures/bar.jpg
-  const test = /^\s*uniform sampler2D (\S+);\s*\/\/\s*(.+)$/gm;
-  const textureDirectives = [];
-  let match = test.exec(source);
-  while (match !== null) {
-    textureDirectives.push({
-      textureId: match[1],
-      filePath: match[2],
-    });
-    match = test.exec(source);
-  }
-  return textureDirectives;
-}
+import parseTextureDirectives from "./parse-texture-directives";
 
 function devicePixelRatio() {
   return window.devicePixelRatio || 1;
@@ -197,7 +182,7 @@ export default class ShaderCanvas {
     this.textures.splice(index, 1);
 
     this.uniforms[textureId].value.dispose();
-    this.uniforms[textureId].value.needsUpdate = true;
+    this.uniforms[textureId].value.needsUpdate = true; // TODO: needed?
 
     delete this.uniforms[textureId];
   }
