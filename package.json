@@ -16,7 +16,7 @@
     "webpack-dev-server": "^2.9.7"
   },
   "scripts": {
-    "start": "webpack-dev-server --open --open-page example/ --config webpack.config.js",
+    "serve": "webpack-dev-server --open --open-page example/ --config webpack.config.js",
     "build": "webpack --config webpack.config.js"
   }
 }
