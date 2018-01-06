@@ -82,6 +82,23 @@ Override the following methods to handle errors and successes.
 By default, errors throw exceptions.
 
 
+## Development
+
+Install dependencies:
+
+    npm install
+
+Open the example page in your browser. This will auto-reload as the source
+changes. Check that tests on the page are passing.
+
+    make serve
+
+Run the build before committing (at least at the end of your PR work), and check
+in the result in `build/`.
+
+    make build
+
+
 ## Credits
 
 Extracted from [atom-glsl-preview](https://github.com/fordhurley/atom-glsl-preview).
