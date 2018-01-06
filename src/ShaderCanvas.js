@@ -81,19 +81,20 @@ export default class ShaderCanvas {
   }
 
   setShader(source, includeDefaultUniforms = true) {
-    const fragmentShader = includeDefaultUniforms ? defaultUniforms + source : source;
     const parsedTextures = parseTextureDirectives(source);
     const oldTextures = difference(this.textures, parsedTextures);
     const newTextures = difference(parsedTextures, this.textures);
     oldTextures.forEach(texture => this.removeTexture(texture.textureId));
     newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
 
+    this.source = source;
+
     const prevMaterial = this.mesh.material;
 
     this.mesh.material = new ShaderMaterial({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
+      fragmentShader: includeDefaultUniforms ? defaultUniforms + source : source,
     });
 
     this.scene.add(this.mesh); // idempotent
@@ -103,16 +104,19 @@ export default class ShaderCanvas {
     if (this.mesh.material.program) {
       diagnostics = this.mesh.material.program.diagnostics;
     }
+    if (diagnostics) {
+      let prefix = diagnostics.fragmentShader.prefix;
+      if (includeDefaultUniforms) {
+        prefix += defaultUniforms;
+      }
+      this.prefix = prefix;
+    }
     if (diagnostics && !diagnostics.runnable) {
       this.mesh.material.dispose();
       this.mesh.material = prevMaterial;
 
       const msg = diagnostics.fragmentShader.log;
-      let prefix = diagnostics.fragmentShader.prefix;
-      if (includeDefaultUniforms) {
-        prefix += defaultUniforms;
-      }
-      this.onShaderError(parseErrorMessages(msg, prefix, source));
+      this.onShaderError(parseErrorMessages(msg, this.prefix, this.source));
     } else {
       prevMaterial.dispose();
       this.onShaderLoad();
@@ -123,6 +127,7 @@ export default class ShaderCanvas {
     var xhr = new XMLHttpRequest();
     xhr.addEventListener("load", (e) => {
       if (xhr.status >= 400) {
+        // FIXME: this is a loadShader error!
         console.error("loadTexture error:", xhr.status, xhr.statusText);
         this.onTextureError(url);
         return;
@@ -130,6 +135,7 @@ export default class ShaderCanvas {
       this.setShader(xhr.responseText);
     });
     xhr.addEventListener("error", (e) => {
+      // FIXME: this is a loadShader error!
       console.error("loadTexture error:", e);
       this.onTextureError(url);
     });

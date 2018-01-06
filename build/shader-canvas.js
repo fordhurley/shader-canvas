@@ -89,52 +89,13 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_three__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_underscore__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_underscore___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_underscore__);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__parse_error_messages__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__parse_texture_directives__ = __webpack_require__(5);
 
 
 
-function parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms) {
-  let out = [];
-  let errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
-  let newLineRegex = /\r?\n/;
-  let match = errorRegex.exec(msg);
-  while (match) {
-    let errorLineNumber = -1;
-    let lineNumber = parseInt(match[2], 10);
-    if (lineNumber !== null) {
-      const prologueLines = prefix.split(newLineRegex).length;
-      const defaultUniformLines = includeDefaultUniforms ? defaultUniforms.split(newLineRegex).length - 1 : 0;
-      const glslifyLineNumber = fragmentShader.split(newLineRegex).findIndex(s => s == "#define GLSLIFY 1") - defaultUniformLines + 1;
 
-      errorLineNumber = lineNumber - prologueLines - defaultUniformLines + 1;
 
-      if (errorLineNumber >= glslifyLineNumber) {
-        errorLineNumber -= 1;
-      }
-    }
-    out.push({
-      "lineNumber": errorLineNumber,
-      "text": `${match[1]}${errorLineNumber}:1${match[3]}`,
-    });
-    match = errorRegex.exec(msg);
-  }
-  return out;
-}
-
-function parseTextureDirectives(source) {
-  // Looking for lines of the form:
-  // uniform sampler2D foo; // ../textures/bar.jpg
-  const test = /^\s*uniform sampler2D (\S+);\s*\/\/\s*(.+)$/gm;
-  const textureDirectives = [];
-  let match = test.exec(source);
-  while (match !== null) {
-    textureDirectives.push({
-      textureId: match[1],
-      filePath: match[2],
-    });
-    match = test.exec(source);
-  }
-  return textureDirectives;
-}
 
 function devicePixelRatio() {
   return window.devicePixelRatio || 1;
@@ -213,19 +174,20 @@ class ShaderCanvas {
   }
 
   setShader(source, includeDefaultUniforms = true) {
-    const fragmentShader = includeDefaultUniforms ? defaultUniforms + source : source;
-    const parsedTextures = parseTextureDirectives(source);
+    const parsedTextures = Object(__WEBPACK_IMPORTED_MODULE_3__parse_texture_directives__["a" /* default */])(source);
     const oldTextures = Object(__WEBPACK_IMPORTED_MODULE_1_underscore__["difference"])(this.textures, parsedTextures);
     const newTextures = Object(__WEBPACK_IMPORTED_MODULE_1_underscore__["difference"])(parsedTextures, this.textures);
     oldTextures.forEach(texture => this.removeTexture(texture.textureId));
     newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
+
+    this.source = source;
 
     const prevMaterial = this.mesh.material;
 
     this.mesh.material = new __WEBPACK_IMPORTED_MODULE_0_three__["e" /* ShaderMaterial */]({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
+      fragmentShader: includeDefaultUniforms ? defaultUniforms + source : source,
     });
 
     this.scene.add(this.mesh); // idempotent
@@ -235,13 +197,19 @@ class ShaderCanvas {
     if (this.mesh.material.program) {
       diagnostics = this.mesh.material.program.diagnostics;
     }
+    if (diagnostics) {
+      let prefix = diagnostics.fragmentShader.prefix;
+      if (includeDefaultUniforms) {
+        prefix += defaultUniforms;
+      }
+      this.prefix = prefix;
+    }
     if (diagnostics && !diagnostics.runnable) {
       this.mesh.material.dispose();
       this.mesh.material = prevMaterial;
 
       const msg = diagnostics.fragmentShader.log;
-      const prefix = diagnostics.fragmentShader.prefix;
-      this.onShaderError(parseErrorMessages(msg, prefix, fragmentShader, includeDefaultUniforms));
+      this.onShaderError(Object(__WEBPACK_IMPORTED_MODULE_2__parse_error_messages__["a" /* default */])(msg, this.prefix, this.source));
     } else {
       prevMaterial.dispose();
       this.onShaderLoad();
@@ -252,6 +220,7 @@ class ShaderCanvas {
     var xhr = new XMLHttpRequest();
     xhr.addEventListener("load", (e) => {
       if (xhr.status >= 400) {
+        // FIXME: this is a loadShader error!
         console.error("loadTexture error:", xhr.status, xhr.statusText);
         this.onTextureError(url);
         return;
@@ -259,6 +228,7 @@ class ShaderCanvas {
       this.setShader(xhr.responseText);
     });
     xhr.addEventListener("error", (e) => {
+      // FIXME: this is a loadShader error!
       console.error("loadTexture error:", e);
       this.onTextureError(url);
     });
@@ -311,7 +281,7 @@ class ShaderCanvas {
     this.textures.splice(index, 1);
 
     this.uniforms[textureId].value.dispose();
-    this.uniforms[textureId].value.needsUpdate = true;
+    this.uniforms[textureId].value.needsUpdate = true; // TODO: needed?
 
     delete this.uniforms[textureId];
   }
@@ -47889,6 +47859,59 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
   }
 }.call(this));
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = parseErrorMessages;
+const errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
+const newLineRegex = /\r?\n/;
+
+function parseErrorMessages(msg, prefix) {
+  let out = [];
+  let match = errorRegex.exec(msg);
+  while (match) {
+    let errorLineNumber = -1;
+    const lineNumber = parseInt(match[2], 10);
+    if (lineNumber !== null) {
+      const prefixLines = prefix.split(newLineRegex).length;
+      errorLineNumber = lineNumber - prefixLines + 1;
+    }
+    out.push({
+      lineNumber: errorLineNumber,
+      text: `${match[1]}${errorLineNumber}:1${match[3]}`,
+    });
+    match = errorRegex.exec(msg);
+  }
+  return out;
+}
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = parseTextureDirectives;
+// Looking for lines of the form:
+// uniform sampler2D foo; // ../textures/bar.jpg
+const re = /^\s*uniform sampler2D (\S+);\s*\/\/\s*(.+)$/gm;
+
+function parseTextureDirectives(source) {
+  const out = [];
+  let match = re.exec(source);
+  while (match !== null) {
+    out.push({
+      textureId: match[1],
+      filePath: match[2],
+    });
+    match = re.exec(source);
+  }
+  return out;
+}
 
 
 /***/ })

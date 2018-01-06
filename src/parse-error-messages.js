@@ -1,19 +1,15 @@
-let errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
-let newLineRegex = /\r?\n/;
+const errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
+const newLineRegex = /\r?\n/;
 
-export default function parseErrorMessages(msg, prefix, originalShader) {
+export default function parseErrorMessages(msg, prefix) {
   let out = [];
   let match = errorRegex.exec(msg);
   while (match) {
     let errorLineNumber = -1;
-    let lineNumber = parseInt(match[2], 10);
+    const lineNumber = parseInt(match[2], 10);
     if (lineNumber !== null) {
       const prefixLines = prefix.split(newLineRegex).length;
-      let glslifyLineNumber = originalShader.split(newLineRegex).findIndex(s => s == "#define GLSLIFY 1");
       errorLineNumber = lineNumber - prefixLines + 1;
-      if (glslifyLineNumber !== -1 && errorLineNumber > glslifyLineNumber) {
-        errorLineNumber -= 1;
-      }
     }
     out.push({
       lineNumber: errorLineNumber,

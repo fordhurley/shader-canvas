@@ -130,7 +130,6 @@
       );
 
       testShaderWithError(`int error = 1.0;
-#define GLSLIFY 1
 void main() {
   float a = 1;
   gl_FragColor = vec4(a, 0.0, 1.0, 1.0);
