@@ -125,6 +125,14 @@ class ShaderCanvas {
       this.domElement = document.createElement("canvas");
     }
 
+    this.renderer = options.renderer;
+    this.rendererIsOwned = false;
+    if (!this.renderer) {
+      this.renderer = new __WEBPACK_IMPORTED_MODULE_0_three__["h" /* WebGLRenderer */]({canvas: this.domElement});
+      this.rendererIsOwned = true;
+    }
+    this.renderer.setPixelRatio(devicePixelRatio());
+
     // Override these for different behavior:
     this.buildTextureURL = function(filePath) {
       return filePath;
@@ -138,9 +146,6 @@ class ShaderCanvas {
     this.onTextureError = function(textureURL) {
       throw new Error("error loading texture " + textureURL);
     };
-
-    this.renderer = new __WEBPACK_IMPORTED_MODULE_0_three__["h" /* WebGLRenderer */]({canvas: this.domElement});
-    this.renderer.setPixelRatio(devicePixelRatio());
 
     this.scene = new __WEBPACK_IMPORTED_MODULE_0_three__["d" /* Scene */]();
 
@@ -245,6 +250,12 @@ class ShaderCanvas {
     this.uniforms.u_resolution.value.y = this.uniforms.iResolution.value.y;
 
     this.renderer.setSize(width, height);
+    if (!this.rendererIsOwned) {
+      this.domElement.width = width * dpr;
+      this.domElement.height = height * dpr;
+      this.domElement.style.width = width + "px";
+      this.domElement.style.height = height + "px";
+    }
   }
 
   setTime(timeSeconds) {
@@ -254,6 +265,9 @@ class ShaderCanvas {
 
   render() {
     this.renderer.render(this.scene, this.camera);
+    if (!this.rendererIsOwned) {
+      this.domElement.getContext("2d").drawImage(this.renderer.domElement, 0, 0);
+    }
   }
 
   addTexture(filePath, textureId) {
@@ -287,10 +301,12 @@ class ShaderCanvas {
   }
 
   dispose() {
+    if (this.rendererIsOwned) {
+      this.renderer.dispose();
+    }
+
     cancelAnimationFrame(this.animationFrameRequest);
     this.domElement = null;
-
-    // TODO: dispose of the THREE stuff
   }
 
   _onMouseMove() {
