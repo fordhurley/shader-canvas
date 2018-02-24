@@ -3,7 +3,8 @@
   "version": "0.5.0",
   "description": "Run GLSL shaders in a canvas",
   "repository": "fordhurley/shader-canvas",
-  "main": "build/shader-canvas.js",
+  "main": "src/index.js",
+  "typings": "src/shader-canvas.d.ts",
   "license": "MIT",
   "dependencies": {
     "three": "^0.89.0",
