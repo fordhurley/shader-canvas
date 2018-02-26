@@ -1,8 +1,8 @@
-import {WebGLRenderer, Scene, OrthographicCamera, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} from "three";
-import {difference} from "underscore";
+const {WebGLRenderer, Scene, OrthographicCamera, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} = require("three");
+const {difference} = require("underscore");
 
-import parseErrorMessages from "./parse-error-messages";
-import parseTextureDirectives from "./parse-texture-directives";
+const parseErrorMessages = require("./parse-error-messages");
+const parseTextureDirectives = require("./parse-texture-directives");
 
 function devicePixelRatio() {
   return window.devicePixelRatio || 1;
@@ -23,7 +23,7 @@ const defaultUniforms = `
   uniform float u_time;
 `;
 
-export default class ShaderCanvas {
+module.exports = class ShaderCanvas {
   constructor(options) {
     options = options || {};
 
@@ -243,8 +243,8 @@ export default class ShaderCanvas {
     }
     this._update();
   }
-}
+};
 
 // So that consumers can construct a shared renderer and pass it to many
 // ShaderCanvas instances, without having to depend on THREE directly:
-export const Renderer = WebGLRenderer;
+module.exports.Renderer = WebGLRenderer;

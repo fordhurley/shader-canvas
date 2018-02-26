@@ -1,7 +1,7 @@
 const errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
 const newLineRegex = /\r?\n/;
 
-export default function parseErrorMessages(msg, prefix) {
+module.exports = function parseErrorMessages(msg, prefix) {
   let out = [];
   let match = errorRegex.exec(msg);
   while (match) {
@@ -18,4 +18,4 @@ export default function parseErrorMessages(msg, prefix) {
     match = errorRegex.exec(msg);
   }
   return out;
-}
+};

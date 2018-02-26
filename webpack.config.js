@@ -8,7 +8,6 @@ module.exports = [
       filename: "shader-canvas.min.js",
       path: path.resolve(__dirname, "build"),
       library: "ShaderCanvas",
-      libraryExport: "default",
     },
     plugins: [
       new UglifyJSPlugin(),
@@ -21,7 +20,6 @@ module.exports = [
       path: path.resolve(__dirname, "build"),
       library: "ShaderCanvas",
       libraryTarget: "umd",
-      libraryExport: "default",
     },
   },
 ];

@@ -2,7 +2,7 @@
 // uniform sampler2D foo; // ../textures/bar.jpg
 const re = /^\s*uniform sampler2D (\S+);\s*\/\/\s*(.+)$/gm;
 
-export default function parseTextureDirectives(source) {
+module.exports = function parseTextureDirectives(source) {
   const out = [];
   let match = re.exec(source);
   while (match !== null) {
@@ -13,4 +13,4 @@ export default function parseTextureDirectives(source) {
     match = re.exec(source);
   }
   return out;
-}
+};
