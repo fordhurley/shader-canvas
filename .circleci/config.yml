@@ -1,0 +1,20 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/shader-canvas
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
+      - run: npm run lint
+      - run: npm run build
+      - run:
+          name: Check that build is unchanged
+          command: test -z "$(git status --porcelain -- build/)" || (echo "build is dirty -- make sure you've committed after building" && false)

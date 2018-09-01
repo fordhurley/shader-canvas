@@ -18,6 +18,7 @@
   },
   "scripts": {
     "serve": "webpack-dev-server --open --open-page example/ --config webpack.config.js",
+    "lint": "eslint .",
     "build": "webpack-cli --mode production --config webpack.config.js"
   }
 }
