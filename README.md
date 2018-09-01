@@ -1,5 +1,7 @@
 # shader-canvas
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/fordhurley/shader-canvas.svg)](https://greenkeeper.io/)
+
 ```javascript
 var shaderCanvas = new ShaderCanvas();
 document.body.appendChild(shaderCanvas.domElement);
