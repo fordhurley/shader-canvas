@@ -15,4 +15,6 @@ jobs:
             - ./node_modules
       - run: npm run lint
       - run: npm run build
-      # TODO: Error if /build is now dirty? Should catch any forgotten builds.
+      - run:
+          name: Check that build is unchanged
+          command: test -z "$(git status --porcelain)" || (echo "repo is dirty -- make sure you've committed the current build" && false)
