@@ -6,6 +6,8 @@ jobs:
       - image: circleci/node:latest
     steps:
       - checkout
+      - run: sudo npm install -g greenkeeper-lockfile
+      - run: greenkeeper-lockfile-update
       - restore_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
       - run: npm install
@@ -18,3 +20,4 @@ jobs:
       - run:
           name: Check that build is unchanged
           command: test -z "$(git status --porcelain -- build/)" || (echo "build is dirty -- make sure you've committed after building" && false)
+      - run: greenkeeper-lockfile-upload
