@@ -1,7 +1,5 @@
 # shader-canvas
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/fordhurley/shader-canvas.svg)](https://greenkeeper.io/)
-
 ```javascript
 var shaderCanvas = new ShaderCanvas();
 document.body.appendChild(shaderCanvas.domElement);
@@ -33,19 +31,19 @@ var shaderCanvas = new ShaderCanvas({
 
 A full example can be found in `example/`.
 
+
 ## Uniforms
 
-The following default uniforms are included. No need to add these into your
-fragment shaders:
+The following default uniforms are available to your shader.
 
 ```glsl
-uniform vec2 iResolution; // size of the preview
-uniform vec2 iMouse; // cursor in normalized coordinates [0, 1)
-uniform float iGlobalTime; // clock in seconds
+uniform vec2 u_resolution; // size of the preview
+uniform vec2 u_mouse; // cursor in normalized coordinates [0, 1)
+uniform float u_time; // clock in seconds
 ```
 
-The variants `u_resolution`, `u_mouse` and `u_time` can also be used to match
-the style found in [The Book of Shaders](http://thebookofshaders.com/).
+The variants `iResolution`, `iMouse` and `iGlobalTime` can also be used for
+legacy reasons.
 
 
 ## Textures
@@ -104,3 +102,6 @@ in the result in `build/`.
 ## Credits
 
 Extracted from [atom-glsl-preview](https://github.com/fordhurley/atom-glsl-preview).
+
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/fordhurley/shader-canvas.svg)](https://greenkeeper.io/)
