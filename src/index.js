@@ -1,17 +1,36 @@
-const {WebGLRenderer, Scene, OrthographicCamera, Vector2, PlaneBufferGeometry, ShaderMaterial, Mesh, TextureLoader} = require("three");
+const {
+  WebGLRenderer,
+  Scene,
+  OrthographicCamera,
+  Vector2,
+  PlaneBufferGeometry,
+  RawShaderMaterial,
+  ShaderMaterial,
+  Mesh,
+  TextureLoader,
+} = require("three");
 const {difference} = require("underscore");
 
 const parseErrorMessages = require("./parse-error-messages");
 const parseTextureDirectives = require("./parse-texture-directives");
+const detectMode = require("./detect-mode");
 
 function devicePixelRatio() {
   return window.devicePixelRatio || 1;
 }
 
-const vertexShader = `
+const legacyVertexShader = `
   void main() {
     gl_Position = vec4(position, 1.0);
   }
+`;
+
+const bareVertexShader = `
+  #ifdef GL_ES
+  precision mediump float;
+  #endif
+  attribute vec3 position;
+  ${legacyVertexShader}
 `;
 
 const defaultUniforms = `
@@ -85,7 +104,7 @@ module.exports = class ShaderCanvas {
     this._update();
   }
 
-  setShader(source, includeDefaultUniforms = true) {
+  setShader(source, mode = "detect") {
     const parsedTextures = parseTextureDirectives(source);
     const oldTextures = difference(this.textures, parsedTextures);
     const newTextures = difference(parsedTextures, this.textures);
@@ -96,10 +115,33 @@ module.exports = class ShaderCanvas {
 
     const prevMaterial = this.mesh.material;
 
-    this.mesh.material = new ShaderMaterial({
+    // Previously, this parameter was a boolean includeDefaultUniforms:
+    if (mode === true) {
+      mode = "legacy";
+    } else if (mode === false) {
+      mode = "prefixed-without-uniforms";
+    }
+
+    if (mode === "detect") {
+      mode = detectMode(source);
+    }
+
+    let Material = mode === "bare" ? RawShaderMaterial : ShaderMaterial;
+
+    let vertexShader = bareVertexShader;
+    if (Material === ShaderMaterial) {
+      vertexShader = legacyVertexShader;
+    }
+
+    let fragmentShader = source;
+    if (mode === "legacy") {
+      fragmentShader = defaultUniforms + source;
+    }
+
+    this.mesh.material = new Material({
       uniforms: this.uniforms,
       vertexShader: vertexShader,
-      fragmentShader: includeDefaultUniforms ? defaultUniforms + source : source,
+      fragmentShader: fragmentShader,
     });
 
     this.scene.add(this.mesh); // idempotent
@@ -111,7 +153,7 @@ module.exports = class ShaderCanvas {
     }
     if (diagnostics) {
       let prefix = diagnostics.fragmentShader.prefix;
-      if (includeDefaultUniforms) {
+      if (mode === "legacy") {
         prefix += defaultUniforms;
       }
       this.prefix = prefix;
