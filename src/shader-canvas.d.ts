@@ -8,6 +8,8 @@ export class Renderer {
   setPixelRatio(ratio: number): void;
 }
 
+export type SourceMode = "detect" | "prefixed-without-uniforms" | "legacy" | "bare";
+
 export default class ShaderCanvas {
   constructor(options: {domElement?: HTMLElement, renderer?: Renderer});
 
@@ -22,7 +24,7 @@ export default class ShaderCanvas {
   onTextureError(textureURL: string): void;
 
   setSize(width: number, height: number): void;
-  setShader(source: string, includeDefaultUniforms?: boolean): void;
+  setShader(source: string, mode: SourceMode): void;
   togglePause(): void;
   render(): void;
 }
