@@ -162,6 +162,10 @@ module.exports = class ShaderCanvas {
       this.mesh.material.dispose();
       this.mesh.material = prevMaterial;
 
+      // Put the textures back how they were:
+      newTextures.forEach(texture => this.removeTexture(texture.textureId));
+      oldTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
+
       const msg = diagnostics.fragmentShader.log;
       this.onShaderError(parseErrorMessages(msg, this.prefix, this.source));
     } else {
@@ -233,6 +237,8 @@ module.exports = class ShaderCanvas {
     const texture = new TextureLoader().load(textureURL, onLoad, null, onError);
     this.uniforms[textureId] = {value: texture};
     this.textures.push({textureURL, textureId});
+
+    this.mesh.material.needsUpdate = true;
   }
 
   removeTexture(textureId) {
@@ -247,6 +253,8 @@ module.exports = class ShaderCanvas {
     this.uniforms[textureId].value.needsUpdate = true; // TODO: needed?
 
     delete this.uniforms[textureId];
+
+    this.mesh.material.needsUpdate = true;
   }
 
   dispose() {
