@@ -7,8 +7,7 @@
   "typings": "src/shader-canvas.d.ts",
   "license": "MIT",
   "dependencies": {
-    "three": "^0.96.0",
-    "underscore": "^1.8.3"
+    "three": "^0.96.0"
   },
   "devDependencies": {
     "eslint": "^5.5.0",
