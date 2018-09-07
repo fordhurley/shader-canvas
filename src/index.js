@@ -111,6 +111,10 @@ module.exports = class ShaderCanvas {
       mode = "prefixed-without-uniforms";
     }
 
+    if (mode === "detect") {
+      mode = detectMode(source);
+    }
+
     const newTextures = parseTextureDirectives(source);
     const oldTextures = this.textures;
     this._setTextures(newTextures);
@@ -166,10 +170,6 @@ module.exports = class ShaderCanvas {
   }
 
   _buildMaterial(source, mode) {
-    if (mode === "detect") {
-      mode = detectMode(source);
-    }
-
     let Material = mode === "bare" ? RawShaderMaterial : ShaderMaterial;
 
     let vertexShader = bareVertexShader;
