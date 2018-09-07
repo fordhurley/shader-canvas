@@ -277,8 +277,6 @@ module.exports = class ShaderCanvas {
     delete this.textures[textureID];
 
     this.uniforms[textureID].value.dispose();
-    this.uniforms[textureID].value.needsUpdate = true; // TODO: needed?
-
     delete this.uniforms[textureID];
 
     this.mesh.material.needsUpdate = true;
