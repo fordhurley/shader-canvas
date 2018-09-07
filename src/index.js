@@ -9,7 +9,6 @@ const {
   Mesh,
   TextureLoader,
 } = require("three");
-const {difference} = require("underscore");
 
 const parseErrorMessages = require("./parse-error-messages");
 const parseTextureDirectives = require("./parse-texture-directives");
@@ -93,7 +92,7 @@ module.exports = class ShaderCanvas {
       u_mouse: {value: new Vector2()},
     };
 
-    this.textures = [];
+    this.textures = {};
 
     this.mesh = new Mesh(new PlaneBufferGeometry(2, 2));
 
@@ -105,16 +104,6 @@ module.exports = class ShaderCanvas {
   }
 
   setShader(source, mode = "detect") {
-    const parsedTextures = parseTextureDirectives(source);
-    const oldTextures = difference(this.textures, parsedTextures);
-    const newTextures = difference(parsedTextures, this.textures);
-    oldTextures.forEach(texture => this.removeTexture(texture.textureId));
-    newTextures.forEach(texture => this.addTexture(texture.filePath, texture.textureId));
-
-    this.source = source;
-
-    const prevMaterial = this.mesh.material;
-
     // Previously, this parameter was a boolean includeDefaultUniforms:
     if (mode === true) {
       mode = "legacy";
@@ -126,25 +115,14 @@ module.exports = class ShaderCanvas {
       mode = detectMode(source);
     }
 
-    let Material = mode === "bare" ? RawShaderMaterial : ShaderMaterial;
+    const newTextures = parseTextureDirectives(source);
+    const oldTextures = this.textures;
+    this._setTextures(newTextures);
 
-    let vertexShader = bareVertexShader;
-    if (Material === ShaderMaterial) {
-      vertexShader = legacyVertexShader;
-    }
+    const oldMaterial = this.mesh.material;
+    this.mesh.material = this._buildMaterial(source, mode);
 
-    let fragmentShader = source;
-    if (mode === "legacy") {
-      fragmentShader = defaultUniforms + source;
-    }
-
-    this.mesh.material = new Material({
-      uniforms: this.uniforms,
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
-    });
-
-    this.scene.add(this.mesh); // idempotent
+    this.scene.add(this.mesh); // idempotent (TODO: only do once)
 
     this.render(); // to force an error
     let diagnostics;
@@ -160,12 +138,13 @@ module.exports = class ShaderCanvas {
     }
     if (diagnostics && !diagnostics.runnable) {
       this.mesh.material.dispose();
-      this.mesh.material = prevMaterial;
+      this._setTextures(oldTextures);
+      this.mesh.material = oldMaterial;
 
       const msg = diagnostics.fragmentShader.log;
-      this.onShaderError(parseErrorMessages(msg, this.prefix, this.source));
+      this.onShaderError(parseErrorMessages(msg, this.prefix, source));
     } else {
-      prevMaterial.dispose();
+      oldMaterial.dispose();
       this.onShaderLoad();
     }
   }
@@ -188,6 +167,26 @@ module.exports = class ShaderCanvas {
     });
     xhr.open("GET", url);
     xhr.send();
+  }
+
+  _buildMaterial(source, mode) {
+    let Material = mode === "bare" ? RawShaderMaterial : ShaderMaterial;
+
+    let vertexShader = bareVertexShader;
+    if (Material === ShaderMaterial) {
+      vertexShader = legacyVertexShader;
+    }
+
+    let fragmentShader = source;
+    if (mode === "legacy") {
+      fragmentShader = defaultUniforms + source;
+    }
+
+    return new Material({
+      uniforms: this.uniforms,
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+    });
   }
 
   setSize(width, height) {
@@ -219,7 +218,40 @@ module.exports = class ShaderCanvas {
     }
   }
 
-  addTexture(filePath, textureId) {
+  _setTextures(textures) {
+    const newTextureIDs = [];
+    const oldTextureIDs = [];
+    for (let id in textures) {
+      if (!this.textures.propertyIsEnumerable(id)) {
+        newTextureIDs.push(id);
+        continue;
+      }
+      if (textures[id].filePath !== this.textures[id].filePath) {
+        // Changed, so it's both old and new.
+        newTextureIDs.push(id);
+        oldTextureIDs.push(id);
+      }
+    }
+    for (let id in this.textures) {
+      if (!textures.propertyIsEnumerable(id)) {
+        oldTextureIDs.push(id);
+      }
+    }
+
+    oldTextureIDs.forEach((id) => {
+      this._removeTexture(id);
+    });
+    newTextureIDs.forEach((id) => {
+      const filePath = textures[id].filePath;
+      this._addTexture(id, filePath);
+    });
+  }
+
+  _addTexture(textureID, filePath) {
+    if (this.textures[textureID]) {
+      throw new Error("tried to add a texture that already exists");
+    }
+
     const textureURL = this.buildTextureURL(filePath);
 
     const onLoad = () => {
@@ -231,22 +263,23 @@ module.exports = class ShaderCanvas {
     };
 
     const texture = new TextureLoader().load(textureURL, onLoad, null, onError);
-    this.uniforms[textureId] = {value: texture};
-    this.textures.push({textureURL, textureId});
+    this.uniforms[textureID] = {value: texture};
+    this.textures[textureID] = {textureID, filePath, textureURL};
+
+    this.mesh.material.needsUpdate = true;
   }
 
-  removeTexture(textureId) {
-    // TODO: keep textures in an object
-    const index = this.textures.findIndex(tex => tex.textureId === textureId);
-    if (index === -1) {
+  _removeTexture(textureID) {
+    const texture = this.textures[textureID];
+    if (!texture) {
       throw new Error("tried to remove a texture that doesn't exist");
     }
-    this.textures.splice(index, 1);
+    delete this.textures[textureID];
 
-    this.uniforms[textureId].value.dispose();
-    this.uniforms[textureId].value.needsUpdate = true; // TODO: needed?
+    this.uniforms[textureID].value.dispose();
+    delete this.uniforms[textureID];
 
-    delete this.uniforms[textureId];
+    this.mesh.material.needsUpdate = true;
   }
 
   dispose() {
