@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
 if [[ "$(git status --porcelain -- build/)" ]]; then
-  echo "build/ is dirty -- run 'npm run build' and commit the result"
+  echo "build/ is dirty"
   exit 1
 fi

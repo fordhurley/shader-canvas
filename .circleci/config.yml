@@ -18,9 +18,6 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run:
-          name: Check that checked in build is up to date (on master only)
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              .circleci/check-clean-build.sh
-            fi
+          name: Check that checked in build is up to date (fails on master only)
+          command: .circleci/check-clean-build.sh || test "${CIRCLE_BRANCH}" != "master"
       - run: greenkeeper-lockfile-upload
