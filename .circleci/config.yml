@@ -18,6 +18,6 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run:
-          name: Check that build is unchanged
-          command: test -z "$(git status --porcelain -- build/)" || (echo "build is dirty -- make sure you've committed after building" && false)
+          name: Check that checked in build is up to date (fails on master only)
+          command: .circleci/check-clean-build.sh || test "${CIRCLE_BRANCH}" != "master"
       - run: greenkeeper-lockfile-upload
