@@ -17,7 +17,25 @@ jobs:
             - ./node_modules
       - run: npm run lint
       - run: npm run build
+      - run: greenkeeper-lockfile-upload
+
+  check-build:
+    working_directory: ~/shader-canvas
+    docker:
+      - image: circleci/node:latest
+    steps:
       - run:
           name: Check that build is unchanged
           command: test -z "$(git status --porcelain -- build/)" || (echo "build is dirty -- make sure you've committed after building" && false)
-      - run: greenkeeper-lockfile-upload
+
+workflows:
+  version: 2
+  build-and-check:
+    jobs:
+      - build
+      - check-build:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
