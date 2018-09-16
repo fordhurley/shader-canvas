@@ -88,6 +88,14 @@ Install dependencies:
 
     npm install
 
+
+Build javascript:
+
+    npm run build
+
+
+// TODO: make this work again:
+
 Open the example page in your browser. This will auto-reload as the source
 changes. Check that tests on the page are passing.
 
