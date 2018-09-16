@@ -14,5 +14,5 @@ function parseTextureDirectives(source) {
     }
     return out;
 }
-exports.default = parseTextureDirectives;
+exports.parseTextureDirectives = parseTextureDirectives;
 //# sourceMappingURL=parse-texture-directives.js.map

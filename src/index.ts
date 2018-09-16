@@ -10,9 +10,9 @@ import {
   WebGLRenderer,
 } from "three";
 
-import detectMode, {SourceMode} from "./detect-mode";
-import parseErrorMessages, {ShaderErrorMessage} from "./parse-error-messages";
-import parseTextureDirectives, {TextureDirective} from "./parse-texture-directives";
+import {detectMode, SourceMode} from "./detect-mode";
+import {parseErrorMessages, ShaderErrorMessage} from "./parse-error-messages";
+import {parseTextureDirectives, TextureDirective} from "./parse-texture-directives";
 
 function devicePixelRatio(): number {
   return window.devicePixelRatio || 1;
@@ -51,7 +51,7 @@ function extractDiagnostics(material: any): any {
 
 export type Renderer = WebGLRenderer;
 
-export default class ShaderCanvas {
+export class ShaderCanvas {
   public domElement: HTMLCanvasElement;
   public paused: boolean;
 

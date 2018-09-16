@@ -28,9 +28,6 @@ const defaultUniforms = `
   uniform float u_time;
 `;
 function extractDiagnostics(material) {
-    if (!material.program) {
-        return;
-    }
     const program = material.program;
     if (!program) {
         return;
@@ -78,9 +75,9 @@ class ShaderCanvas {
     }
     setShader(source, mode = "detect") {
         if (mode === "detect") {
-            mode = detect_mode_1.default(source);
+            mode = detect_mode_1.detectMode(source);
         }
-        const newTextures = parse_texture_directives_1.default(source);
+        const newTextures = parse_texture_directives_1.parseTextureDirectives(source);
         const oldTextures = this.textures;
         this.setTextures(newTextures);
         const oldMaterial = this.mesh.material;
@@ -97,7 +94,7 @@ class ShaderCanvas {
             this.setTextures(oldTextures);
             this.mesh.material = oldMaterial;
             const msg = diagnostics.fragmentShader.log;
-            this.onShaderError(parse_error_messages_1.default(msg, prefix));
+            this.onShaderError(parse_error_messages_1.parseErrorMessages(msg, prefix));
         }
         else {
             oldMaterial.dispose();
@@ -260,5 +257,5 @@ class ShaderCanvas {
         this._update();
     }
 }
-exports.default = ShaderCanvas;
+exports.ShaderCanvas = ShaderCanvas;
 //# sourceMappingURL=index.js.map

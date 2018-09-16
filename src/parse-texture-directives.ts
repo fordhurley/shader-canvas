@@ -7,7 +7,7 @@ export interface TextureDirective {
   filePath: string;
 }
 
-export default function parseTextureDirectives(source: string): {[textureID: string]: TextureDirective} {
+export function parseTextureDirectives(source: string): {[textureID: string]: TextureDirective} {
   const out: {[textureID: string]: TextureDirective} = {};
   let match = re.exec(source);
   while (match !== null) {

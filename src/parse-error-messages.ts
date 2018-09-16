@@ -6,7 +6,7 @@ export interface ShaderErrorMessage {
   lineNumber: number;
 }
 
-export default function parseErrorMessages(msg: string, prefix: string): ShaderErrorMessage[] {
+export function parseErrorMessages(msg: string, prefix: string): ShaderErrorMessage[] {
   const out = [];
   let match = errorRegex.exec(msg);
   while (match) {

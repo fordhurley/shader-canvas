@@ -20,5 +20,5 @@ function parseErrorMessages(msg, prefix) {
     }
     return out;
 }
-exports.default = parseErrorMessages;
+exports.parseErrorMessages = parseErrorMessages;
 //# sourceMappingURL=parse-error-messages.js.map

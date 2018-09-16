@@ -13,5 +13,5 @@ function detectMode(source) {
     }
     return "prefixed-without-uniforms";
 }
-exports.default = detectMode;
+exports.detectMode = detectMode;
 //# sourceMappingURL=detect-mode.js.map
