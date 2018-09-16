@@ -14,10 +14,6 @@ import {detectMode, SourceMode} from "./detect-mode";
 import {parseErrorMessages, ShaderErrorMessage} from "./parse-error-messages";
 import {parseTextureDirectives, TextureDirective} from "./parse-texture-directives";
 
-function devicePixelRatio(): number {
-  return window.devicePixelRatio || 1;
-}
-
 const legacyVertexShader = `
   void main() {
     gl_Position = vec4(position, 1.0);
@@ -82,7 +78,7 @@ export class ShaderCanvas {
 
     this.rendererIsOwned = options.renderer === undefined;
     this.renderer = options.renderer || new WebGLRenderer({canvas: this.domElement});
-    this.renderer.setPixelRatio(devicePixelRatio());
+    this.renderer.setPixelRatio(window.devicePixelRatio);
 
     // Override these for different behavior:
     this.buildTextureURL = (filePath) => filePath;
@@ -101,7 +97,7 @@ export class ShaderCanvas {
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
     this.camera.position.z = 1;
 
-    this.renderer.render(this.scene, this.camera);
+    this.render();
 
     this.startTimeSeconds = performance.now() / 1000;
     this.pausedTimeSeconds = 0;
@@ -120,11 +116,11 @@ export class ShaderCanvas {
 
     this.mesh = new Mesh(new PlaneBufferGeometry(2, 2));
 
-    this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
+    this.renderer.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
 
-    this._update = this._update.bind(this);
-    this._update();
+    this.update = this.update.bind(this);
+    this.update();
   }
 
   public setShader(source: string, mode: SourceMode = "detect"): void {
@@ -203,7 +199,7 @@ export class ShaderCanvas {
   }
 
   public setSize(width: number, height: number): void {
-    const dpr = devicePixelRatio();
+    const dpr = window.devicePixelRatio;
 
     this.uniforms.iResolution.value.x = width * dpr;
     this.uniforms.iResolution.value.y = height * dpr;
@@ -259,15 +255,15 @@ export class ShaderCanvas {
     }
 
     oldTextureIDs.forEach((id) => {
-      this._removeTexture(id);
+      this.removeTexture(id);
     });
     newTextureIDs.forEach((id) => {
       const filePath = textures[id].filePath;
-      this._addTexture(id, filePath);
+      this.addTexture(id, filePath);
     });
   }
 
-  private _addTexture(textureID: string, filePath: string) {
+  private addTexture(textureID: string, filePath: string) {
     if (this.textures[textureID]) {
       throw new Error("tried to add a texture that already exists");
     }
@@ -289,7 +285,7 @@ export class ShaderCanvas {
     (this.mesh.material as ShaderMaterial).needsUpdate = true;
   }
 
-  private _removeTexture(textureID: string) {
+  private removeTexture(textureID: string) {
     const texture = this.textures[textureID];
     if (!texture) {
       throw new Error("tried to remove a texture that doesn't exist");
@@ -313,7 +309,7 @@ export class ShaderCanvas {
     this.domElement.remove();
   }
 
-  private _onMouseMove(event: MouseEvent) {
+  private onMouseMove(event: MouseEvent) {
     const {width, height} = this.renderer.getSize();
 
     this.uniforms.iMouse.value.x = event.offsetX / width;
@@ -322,9 +318,9 @@ export class ShaderCanvas {
     this.uniforms.u_mouse.value.y = this.uniforms.iMouse.value.y;
   }
 
-  private _update() {
+  private update() {
     if (this.paused) { return; }
-    this.animationFrameRequest = requestAnimationFrame(this._update);
+    this.animationFrameRequest = requestAnimationFrame(this.update);
     this.setTime((performance.now() / 1000) - this.startTimeSeconds);
     this.render();
   }
@@ -338,6 +334,6 @@ export class ShaderCanvas {
     } else {
       this.pausedTimeSeconds = performance.now() / 1000;
     }
-    this._update();
+    this.update();
   }
 }
