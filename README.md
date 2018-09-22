@@ -1,6 +1,8 @@
 # shader-canvas
 
 ```javascript
+import {ShaderCanvas} from "shader-canvas";
+
 var shaderCanvas = new ShaderCanvas();
 document.body.appendChild(shaderCanvas.domElement);
 
@@ -89,22 +91,16 @@ Install dependencies:
     npm install
 
 
-Build javascript:
+Run the typescript build before committing (at least at the end of your PR work),
+and check in the result in `dist/`.
 
     npm run build
 
 
-// TODO: make this work again:
-
 Open the example page in your browser. This will auto-reload as the source
 changes. Check that tests on the page are passing.
 
-    make serve
-
-Run the build before committing (at least at the end of your PR work), and check
-in the result in `build/`.
-
-    make build
+    npm run example
 
 
 ## Credits

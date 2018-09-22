@@ -4,9 +4,6 @@ const three_1 = require("three");
 const detect_mode_1 = require("./detect-mode");
 const parse_error_messages_1 = require("./parse-error-messages");
 const parse_texture_directives_1 = require("./parse-texture-directives");
-function devicePixelRatio() {
-    return window.devicePixelRatio || 1;
-}
 const legacyVertexShader = `
   void main() {
     gl_Position = vec4(position, 1.0);
@@ -39,7 +36,7 @@ class ShaderCanvas {
         this.domElement = options.domElement || document.createElement("canvas");
         this.rendererIsOwned = options.renderer === undefined;
         this.renderer = options.renderer || new three_1.WebGLRenderer({ canvas: this.domElement });
-        this.renderer.setPixelRatio(devicePixelRatio());
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         // Override these for different behavior:
         this.buildTextureURL = (filePath) => filePath;
         this.onShaderLoad = () => undefined;
@@ -54,7 +51,7 @@ class ShaderCanvas {
         this.scene = new three_1.Scene();
         this.camera = new three_1.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
         this.camera.position.z = 1;
-        this.renderer.render(this.scene, this.camera);
+        this.render();
         this.startTimeSeconds = performance.now() / 1000;
         this.pausedTimeSeconds = 0;
         this.paused = false;
@@ -68,10 +65,10 @@ class ShaderCanvas {
         };
         this.textures = {};
         this.mesh = new three_1.Mesh(new three_1.PlaneBufferGeometry(2, 2));
-        this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
+        this.renderer.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
         // Don't need to remove this, because we'll just remove the element.
-        this._update = this._update.bind(this);
-        this._update();
+        this.update = this.update.bind(this);
+        this.update();
     }
     setShader(source, mode = "detect") {
         if (mode === "detect") {
@@ -137,7 +134,7 @@ class ShaderCanvas {
         });
     }
     setSize(width, height) {
-        const dpr = devicePixelRatio();
+        const dpr = window.devicePixelRatio;
         this.uniforms.iResolution.value.x = width * dpr;
         this.uniforms.iResolution.value.y = height * dpr;
         this.uniforms.u_resolution.value.x = this.uniforms.iResolution.value.x;
@@ -187,14 +184,14 @@ class ShaderCanvas {
             }
         }
         oldTextureIDs.forEach((id) => {
-            this._removeTexture(id);
+            this.removeTexture(id);
         });
         newTextureIDs.forEach((id) => {
             const filePath = textures[id].filePath;
-            this._addTexture(id, filePath);
+            this.addTexture(id, filePath);
         });
     }
-    _addTexture(textureID, filePath) {
+    addTexture(textureID, filePath) {
         if (this.textures[textureID]) {
             throw new Error("tried to add a texture that already exists");
         }
@@ -210,7 +207,7 @@ class ShaderCanvas {
         this.textures[textureID] = { textureID, filePath };
         this.mesh.material.needsUpdate = true;
     }
-    _removeTexture(textureID) {
+    removeTexture(textureID) {
         const texture = this.textures[textureID];
         if (!texture) {
             throw new Error("tried to remove a texture that doesn't exist");
@@ -229,18 +226,18 @@ class ShaderCanvas {
         }
         this.domElement.remove();
     }
-    _onMouseMove(event) {
+    onMouseMove(event) {
         const { width, height } = this.renderer.getSize();
         this.uniforms.iMouse.value.x = event.offsetX / width;
         this.uniforms.iMouse.value.y = 1 - (event.offsetY / height);
         this.uniforms.u_mouse.value.x = this.uniforms.iMouse.value.x;
         this.uniforms.u_mouse.value.y = this.uniforms.iMouse.value.y;
     }
-    _update() {
+    update() {
         if (this.paused) {
             return;
         }
-        this.animationFrameRequest = requestAnimationFrame(this._update);
+        this.animationFrameRequest = requestAnimationFrame(this.update);
         this.setTime((performance.now() / 1000) - this.startTimeSeconds);
         this.render();
     }
@@ -254,8 +251,8 @@ class ShaderCanvas {
         else {
             this.pausedTimeSeconds = performance.now() / 1000;
         }
-        this._update();
+        this.update();
     }
 }
 exports.ShaderCanvas = ShaderCanvas;
-//# sourceMappingURL=index.js.map
+//# sourceMappingURL=shader-canvas.js.map

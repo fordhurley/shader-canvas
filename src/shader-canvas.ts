@@ -46,6 +46,8 @@ function extractDiagnostics(material: any): any {
 }
 
 export type Renderer = WebGLRenderer;
+export type ShaderErrorMessage = ShaderErrorMessage;
+export type SourceMode = SourceMode;
 
 export class ShaderCanvas {
   public domElement: HTMLCanvasElement;
