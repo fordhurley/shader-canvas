@@ -1,8 +1,13 @@
 const errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
 const newLineRegex = /\r?\n/;
 
-module.exports = function parseErrorMessages(msg, prefix) {
-  let out = [];
+export interface ShaderErrorMessage {
+  text: string;
+  lineNumber: number;
+}
+
+export function parseErrorMessages(msg: string, prefix: string): ShaderErrorMessage[] {
+  const out = [];
   let match = errorRegex.exec(msg);
   while (match) {
     let errorLineNumber = -1;
@@ -18,4 +23,4 @@ module.exports = function parseErrorMessages(msg, prefix) {
     match = errorRegex.exec(msg);
   }
   return out;
-};
+}

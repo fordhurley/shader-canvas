@@ -1,22 +1,18 @@
-const {
-  WebGLRenderer,
-  Scene,
+import {
+  Mesh,
   OrthographicCamera,
-  Vector2,
   PlaneBufferGeometry,
   RawShaderMaterial,
+  Scene,
   ShaderMaterial,
-  Mesh,
   TextureLoader,
-} = require("three");
+  Vector2,
+  WebGLRenderer,
+} from "three";
 
-const parseErrorMessages = require("./parse-error-messages");
-const parseTextureDirectives = require("./parse-texture-directives");
-const detectMode = require("./detect-mode");
-
-function devicePixelRatio() {
-  return window.devicePixelRatio || 1;
-}
+import {detectMode, SourceMode} from "./detect-mode";
+import {parseErrorMessages, ShaderErrorMessage} from "./parse-error-messages";
+import {parseTextureDirectives, TextureDirective} from "./parse-texture-directives";
 
 const legacyVertexShader = `
   void main() {
@@ -41,34 +37,60 @@ const defaultUniforms = `
   uniform float u_time;
 `;
 
-module.exports = class ShaderCanvas {
-  constructor(options) {
-    options = options || {};
+function extractDiagnostics(material: any): any {
+  const program = material.program;
+  if (!program) {
+    return;
+  }
+  return program.diagnostics;
+}
 
-    this.domElement = options.domElement;
-    if (!this.domElement) {
-      this.domElement = document.createElement("canvas");
-    }
+export type Renderer = WebGLRenderer;
+export type ShaderErrorMessage = ShaderErrorMessage;
+export type SourceMode = SourceMode;
 
-    this.renderer = options.renderer;
-    this.rendererIsOwned = false;
-    if (!this.renderer) {
-      this.renderer = new WebGLRenderer({canvas: this.domElement});
-      this.rendererIsOwned = true;
-    }
-    this.renderer.setPixelRatio(devicePixelRatio());
+export class ShaderCanvas {
+  public domElement: HTMLCanvasElement;
+  public paused: boolean;
+
+  // overridable for configuration
+  public buildTextureURL: (url: string) => string;
+  public onShaderLoad: () => void;
+  public onShaderError: (messages: ShaderErrorMessage[]) => void;
+  public onTextureLoad: () => void;
+  public onTextureError: (textureURL: string) => void;
+
+  private renderer: Renderer;
+  private rendererIsOwned: boolean;
+
+  private scene: Scene;
+  private camera: OrthographicCamera;
+  private mesh: Mesh;
+
+  private startTimeSeconds: number;
+  private pausedTimeSeconds: number;
+
+  private uniforms: any; // TODO
+  private textures: {[textureID: string]: TextureDirective};
+
+  private animationFrameRequest: number | undefined;
+
+  constructor(options: {domElement?: HTMLCanvasElement, renderer?: Renderer} = {}) {
+    this.domElement = options.domElement || document.createElement("canvas");
+
+    this.rendererIsOwned = options.renderer === undefined;
+    this.renderer = options.renderer || new WebGLRenderer({canvas: this.domElement});
+    this.renderer.setPixelRatio(window.devicePixelRatio);
 
     // Override these for different behavior:
-    this.buildTextureURL = function(filePath) {
-      return filePath;
-    };
-    this.onShaderLoad = function() {};
-    this.onShaderError = messages => {
-      const errorOutput = messages.map(message => message.text).join('\n');
+    this.buildTextureURL = (filePath) => filePath;
+    this.onShaderLoad = () => undefined;
+    this.onShaderError = (messages) => {
+      const errorOutput = messages.map((message) => message.text).join("\n");
       throw new Error("shader error:\n" + errorOutput);
     };
-    this.onTextureLoad = function() {};
-    this.onTextureError = function(textureURL) {
+    this.onTextureLoad = () => undefined;
+    this.onTextureError = (textureURL) => {
       throw new Error("error loading texture " + textureURL);
     };
 
@@ -77,9 +99,9 @@ module.exports = class ShaderCanvas {
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
     this.camera.position.z = 1;
 
-    this.renderer.render(this.scene, this.camera);
+    this.render();
 
-    this.startTimeSeconds = performance.now()/1000;
+    this.startTimeSeconds = performance.now() / 1000;
     this.pausedTimeSeconds = 0;
     this.paused = false;
 
@@ -96,81 +118,70 @@ module.exports = class ShaderCanvas {
 
     this.mesh = new Mesh(new PlaneBufferGeometry(2, 2));
 
-    this.renderer.domElement.addEventListener("mousemove", this._onMouseMove.bind(this), false);
+    this.renderer.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
     // Don't need to remove this, because we'll just remove the element.
 
-    this._update = this._update.bind(this);
-    this._update();
+    this.update = this.update.bind(this);
+    this.update();
   }
 
-  setShader(source, mode = "detect") {
-    // Previously, this parameter was a boolean includeDefaultUniforms:
-    if (mode === true) {
-      mode = "legacy";
-    } else if (mode === false) {
-      mode = "prefixed-without-uniforms";
-    }
-
+  public setShader(source: string, mode: SourceMode = "detect"): void {
     if (mode === "detect") {
       mode = detectMode(source);
     }
 
     const newTextures = parseTextureDirectives(source);
     const oldTextures = this.textures;
-    this._setTextures(newTextures);
+    this.setTextures(newTextures);
 
-    const oldMaterial = this.mesh.material;
-    this.mesh.material = this._buildMaterial(source, mode);
+    const oldMaterial = this.mesh.material as ShaderMaterial;
+    this.mesh.material = this.buildMaterial(source, mode);
 
     this.scene.add(this.mesh); // idempotent (TODO: only do once)
 
     this.render(); // to force an error
-    let diagnostics;
-    if (this.mesh.material.program) {
-      diagnostics = this.mesh.material.program.diagnostics;
-    }
-    if (diagnostics) {
+
+    const diagnostics = extractDiagnostics(this.mesh.material);
+    if (diagnostics && !diagnostics.runnable) {
       let prefix = diagnostics.fragmentShader.prefix;
       if (mode === "legacy") {
         prefix += defaultUniforms;
       }
-      this.prefix = prefix;
-    }
-    if (diagnostics && !diagnostics.runnable) {
+
       this.mesh.material.dispose();
-      this._setTextures(oldTextures);
+      this.setTextures(oldTextures);
       this.mesh.material = oldMaterial;
 
       const msg = diagnostics.fragmentShader.log;
-      this.onShaderError(parseErrorMessages(msg, this.prefix, source));
+      this.onShaderError(parseErrorMessages(msg, prefix));
     } else {
       oldMaterial.dispose();
       this.onShaderLoad();
     }
   }
 
-  loadShader(url) {
-    var xhr = new XMLHttpRequest();
-    xhr.addEventListener("load", (e) => {
+  public loadShader(url: string) {
+    const xhr = new XMLHttpRequest();
+    xhr.addEventListener("load", () => {
       if (xhr.status >= 400) {
         // FIXME: this is a loadShader error!
-        console.error("loadTexture error:", xhr.status, xhr.statusText);
+        // console.error("loadShader error:", xhr.status, xhr.statusText);
         this.onTextureError(url);
         return;
       }
       this.setShader(xhr.responseText);
     });
-    xhr.addEventListener("error", (e) => {
+    xhr.addEventListener("error", () => {
       // FIXME: this is a loadShader error!
-      console.error("loadTexture error:", e);
+      // console.error("loadShader error:", e);
       this.onTextureError(url);
     });
     xhr.open("GET", url);
     xhr.send();
   }
 
-  _buildMaterial(source, mode) {
-    let Material = mode === "bare" ? RawShaderMaterial : ShaderMaterial;
+  private buildMaterial(source: string, mode: SourceMode) {
+    const Material = mode === "bare" ? RawShaderMaterial : ShaderMaterial;
 
     let vertexShader = bareVertexShader;
     if (Material === ShaderMaterial) {
@@ -184,13 +195,13 @@ module.exports = class ShaderCanvas {
 
     return new Material({
       uniforms: this.uniforms,
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
+      vertexShader,
+      fragmentShader,
     });
   }
 
-  setSize(width, height) {
-    const dpr = devicePixelRatio();
+  public setSize(width: number, height: number): void {
+    const dpr = window.devicePixelRatio;
 
     this.uniforms.iResolution.value.x = width * dpr;
     this.uniforms.iResolution.value.y = height * dpr;
@@ -206,22 +217,29 @@ module.exports = class ShaderCanvas {
     }
   }
 
-  setTime(timeSeconds) {
+  public setTime(timeSeconds: number) {
     this.uniforms.iGlobalTime.value = timeSeconds;
     this.uniforms.u_time.value = timeSeconds;
   }
 
-  render() {
+  public render() {
     this.renderer.render(this.scene, this.camera);
     if (!this.rendererIsOwned) {
-      this.domElement.getContext("2d").drawImage(this.renderer.domElement, 0, 0);
+      const ctx = this.domElement.getContext("2d");
+      if (!ctx) {
+        throw new Error("could not get 2d context");
+      }
+      ctx.drawImage(this.renderer.domElement, 0, 0);
     }
   }
 
-  _setTextures(textures) {
+  private setTextures(textures: {[textureID: string]: TextureDirective}) {
     const newTextureIDs = [];
     const oldTextureIDs = [];
-    for (let id in textures) {
+    for (const id in textures) {
+      if (!textures.hasOwnProperty(id)) {
+        continue;
+      }
       if (!this.textures.propertyIsEnumerable(id)) {
         newTextureIDs.push(id);
         continue;
@@ -232,22 +250,22 @@ module.exports = class ShaderCanvas {
         oldTextureIDs.push(id);
       }
     }
-    for (let id in this.textures) {
+    for (const id in this.textures) {
       if (!textures.propertyIsEnumerable(id)) {
         oldTextureIDs.push(id);
       }
     }
 
     oldTextureIDs.forEach((id) => {
-      this._removeTexture(id);
+      this.removeTexture(id);
     });
     newTextureIDs.forEach((id) => {
       const filePath = textures[id].filePath;
-      this._addTexture(id, filePath);
+      this.addTexture(id, filePath);
     });
   }
 
-  _addTexture(textureID, filePath) {
+  private addTexture(textureID: string, filePath: string) {
     if (this.textures[textureID]) {
       throw new Error("tried to add a texture that already exists");
     }
@@ -262,14 +280,14 @@ module.exports = class ShaderCanvas {
       this.onTextureError(textureURL);
     };
 
-    const texture = new TextureLoader().load(textureURL, onLoad, null, onError);
+    const texture = new TextureLoader().load(textureURL, onLoad, undefined, onError);
     this.uniforms[textureID] = {value: texture};
-    this.textures[textureID] = {textureID, filePath, textureURL};
+    this.textures[textureID] = {textureID, filePath};
 
-    this.mesh.material.needsUpdate = true;
+    (this.mesh.material as ShaderMaterial).needsUpdate = true;
   }
 
-  _removeTexture(textureID) {
+  private removeTexture(textureID: string) {
     const texture = this.textures[textureID];
     if (!texture) {
       throw new Error("tried to remove a texture that doesn't exist");
@@ -279,19 +297,21 @@ module.exports = class ShaderCanvas {
     this.uniforms[textureID].value.dispose();
     delete this.uniforms[textureID];
 
-    this.mesh.material.needsUpdate = true;
+    (this.mesh.material as ShaderMaterial).needsUpdate = true;
   }
 
-  dispose() {
+  public dispose() {
     if (this.rendererIsOwned) {
       this.renderer.dispose();
     }
 
-    cancelAnimationFrame(this.animationFrameRequest);
-    this.domElement = null;
+    if (this.animationFrameRequest !== undefined) {
+      cancelAnimationFrame(this.animationFrameRequest);
+    }
+    this.domElement.remove();
   }
 
-  _onMouseMove() {
+  private onMouseMove(event: MouseEvent) {
     const {width, height} = this.renderer.getSize();
 
     this.uniforms.iMouse.value.x = event.offsetX / width;
@@ -300,14 +320,14 @@ module.exports = class ShaderCanvas {
     this.uniforms.u_mouse.value.y = this.uniforms.iMouse.value.y;
   }
 
-  _update() {
+  private update() {
     if (this.paused) { return; }
-    this.animationFrameRequest = requestAnimationFrame(this._update);
+    this.animationFrameRequest = requestAnimationFrame(this.update);
     this.setTime((performance.now() / 1000) - this.startTimeSeconds);
     this.render();
   }
 
-  togglePause() {
+  public togglePause(): void {
     this.paused = !this.paused;
     if (!this.paused) {
       // Unpaused now, so move our start time up to account for the time we
@@ -316,10 +336,6 @@ module.exports = class ShaderCanvas {
     } else {
       this.pausedTimeSeconds = performance.now() / 1000;
     }
-    this._update();
+    this.update();
   }
-};
-
-// So that consumers can construct a shared renderer and pass it to many
-// ShaderCanvas instances, without having to depend on THREE directly:
-module.exports.Renderer = WebGLRenderer;
+}

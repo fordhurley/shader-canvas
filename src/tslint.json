@@ -1,0 +1,9 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:recommended"],
+  "rules": {
+    "object-literal-sort-keys": false,
+    "interface-name": false,
+    "member-ordering": false
+  }
+}
