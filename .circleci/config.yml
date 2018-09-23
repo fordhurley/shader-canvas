@@ -6,8 +6,6 @@ jobs:
       - image: circleci/node:latest
     steps:
       - checkout
-      - run: sudo npm install -g greenkeeper-lockfile
-      - run: greenkeeper-lockfile-update
       - restore_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
       - run: npm install
@@ -20,4 +18,3 @@ jobs:
       - run:
           name: Check that checked in build is up to date (fails on master only)
           command: .circleci/check-clean-build.sh || test "${CIRCLE_BRANCH}" != "master"
-      - run: greenkeeper-lockfile-upload
