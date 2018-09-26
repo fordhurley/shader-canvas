@@ -6,7 +6,7 @@
   "main": "dist/shader-canvas.js",
   "license": "MIT",
   "dependencies": {
-    "three": "^0.96.0"
+    "three": "^0.97.0"
   },
   "devDependencies": {
     "@types/three": "^0.92.21",
