@@ -45,7 +45,8 @@ function extractDiagnostics(material: any): any {
   return program.diagnostics;
 }
 
-export type Renderer = WebGLRenderer;
+type Renderer = WebGLRenderer;
+export const Renderer = WebGLRenderer;
 export type ShaderErrorMessage = ShaderErrorMessage;
 export type SourceMode = SourceMode;
 

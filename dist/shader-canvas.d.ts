@@ -1,7 +1,8 @@
 import { WebGLRenderer } from "three";
 import { SourceMode } from "./detect-mode";
 import { ShaderErrorMessage } from "./parse-error-messages";
-export declare type Renderer = WebGLRenderer;
+declare type Renderer = WebGLRenderer;
+export declare const Renderer: typeof WebGLRenderer;
 export declare type ShaderErrorMessage = ShaderErrorMessage;
 export declare type SourceMode = SourceMode;
 export declare class ShaderCanvas {
@@ -40,3 +41,4 @@ export declare class ShaderCanvas {
     private update;
     togglePause(): void;
 }
+export {};

@@ -31,6 +31,7 @@ function extractDiagnostics(material) {
     }
     return program.diagnostics;
 }
+exports.Renderer = three_1.WebGLRenderer;
 class ShaderCanvas {
     constructor(options = {}) {
         this.domElement = options.domElement || document.createElement("canvas");
