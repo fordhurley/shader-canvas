@@ -77,27 +77,33 @@ class ShaderCanvas {
         }
         const newTextures = parse_texture_directives_1.parseTextureDirectives(source);
         const oldTextures = this.textures;
-        this.setTextures(newTextures);
-        const oldMaterial = this.mesh.material;
-        this.mesh.material = this.buildMaterial(source, mode);
-        this.scene.add(this.mesh); // idempotent (TODO: only do once)
-        this.render(); // to force an error
-        const diagnostics = extractDiagnostics(this.mesh.material);
-        if (diagnostics && !diagnostics.runnable) {
-            let prefix = diagnostics.fragmentShader.prefix;
-            if (mode === "legacy") {
-                prefix += defaultUniforms;
+        const texPromise = this.setTextures(newTextures);
+        const shaderPromise = new Promise((resolve, reject) => {
+            const oldMaterial = this.mesh.material;
+            this.mesh.material = this.buildMaterial(source, mode);
+            this.scene.add(this.mesh); // idempotent (TODO: only do once)
+            this.render(); // to force an error
+            const diagnostics = extractDiagnostics(this.mesh.material);
+            if (diagnostics && !diagnostics.runnable) {
+                let prefix = diagnostics.fragmentShader.prefix;
+                if (mode === "legacy") {
+                    prefix += defaultUniforms;
+                }
+                this.mesh.material.dispose();
+                this.setTextures(oldTextures);
+                this.mesh.material = oldMaterial;
+                const msg = diagnostics.fragmentShader.log;
+                const errorMessages = parse_error_messages_1.parseErrorMessages(msg, prefix);
+                this.onShaderError(errorMessages);
+                reject(errorMessages);
             }
-            this.mesh.material.dispose();
-            this.setTextures(oldTextures);
-            this.mesh.material = oldMaterial;
-            const msg = diagnostics.fragmentShader.log;
-            this.onShaderError(parse_error_messages_1.parseErrorMessages(msg, prefix));
-        }
-        else {
-            oldMaterial.dispose();
-            this.onShaderLoad();
-        }
+            else {
+                oldMaterial.dispose();
+                this.onShaderLoad();
+                resolve();
+            }
+        });
+        return Promise.all([texPromise, shaderPromise]).then(() => this);
     }
     loadShader(url) {
         const xhr = new XMLHttpRequest();
@@ -187,26 +193,31 @@ class ShaderCanvas {
         oldTextureIDs.forEach((id) => {
             this.removeTexture(id);
         });
-        newTextureIDs.forEach((id) => {
+        const promises = newTextureIDs.map((id) => {
             const filePath = textures[id].filePath;
-            this.addTexture(id, filePath);
+            return this.addTexture(id, filePath);
         });
+        return Promise.all(promises).then(() => this);
     }
     addTexture(textureID, filePath) {
         if (this.textures[textureID]) {
             throw new Error("tried to add a texture that already exists");
         }
         const textureURL = this.buildTextureURL(filePath);
-        const onLoad = () => {
-            this.onTextureLoad();
-        };
-        const onError = () => {
-            this.onTextureError(textureURL);
-        };
-        const texture = new three_1.TextureLoader().load(textureURL, onLoad, undefined, onError);
-        this.uniforms[textureID] = { value: texture };
-        this.textures[textureID] = { textureID, filePath };
-        this.mesh.material.needsUpdate = true;
+        return new Promise((resolve, reject) => {
+            const onLoad = () => {
+                this.onTextureLoad();
+                resolve();
+            };
+            const onError = (e) => {
+                this.onTextureError(textureURL);
+                reject(e);
+            };
+            const texture = new three_1.TextureLoader().load(textureURL, onLoad, undefined, onError);
+            this.uniforms[textureID] = { value: texture };
+            this.textures[textureID] = { textureID, filePath };
+            this.mesh.material.needsUpdate = true;
+        });
     }
     removeTexture(textureID) {
         const texture = this.textures[textureID];
