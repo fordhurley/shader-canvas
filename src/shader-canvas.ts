@@ -45,6 +45,10 @@ function extractDiagnostics(material: any): any {
   return program.diagnostics;
 }
 
+function nowSeconds(): number {
+  return performance.now() / 1000;
+}
+
 type Renderer = WebGLRenderer;
 export const Renderer = WebGLRenderer;
 export type ShaderErrorMessage = ShaderErrorMessage;
@@ -102,7 +106,7 @@ export class ShaderCanvas {
 
     this.render();
 
-    this.startTimeSeconds = performance.now() / 1000;
+    this.startTimeSeconds = nowSeconds();
     this.pausedTimeSeconds = 0;
     this.paused = false;
 
@@ -119,8 +123,8 @@ export class ShaderCanvas {
 
     this.mesh = new Mesh(new PlaneBufferGeometry(2, 2));
 
-    this.renderer.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
-    // Don't need to remove this, because we'll just remove the element.
+    this.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
+    // TODO: remove this listener in dispose()
 
     this.update = this.update.bind(this);
     this.update();
@@ -309,6 +313,8 @@ export class ShaderCanvas {
     if (this.animationFrameRequest !== undefined) {
       cancelAnimationFrame(this.animationFrameRequest);
     }
+
+    // TODO: only remove this if we created it
     this.domElement.remove();
   }
 
@@ -324,7 +330,7 @@ export class ShaderCanvas {
   private update() {
     if (this.paused) { return; }
     this.animationFrameRequest = requestAnimationFrame(this.update);
-    this.setTime((performance.now() / 1000) - this.startTimeSeconds);
+    this.setTime(nowSeconds() - this.startTimeSeconds);
     this.render();
   }
 
@@ -333,9 +339,9 @@ export class ShaderCanvas {
     if (!this.paused) {
       // Unpaused now, so move our start time up to account for the time we
       // spent paused:
-      this.startTimeSeconds += (performance.now() / 1000) - this.pausedTimeSeconds;
+      this.startTimeSeconds += nowSeconds() - this.pausedTimeSeconds;
     } else {
-      this.pausedTimeSeconds = performance.now() / 1000;
+      this.pausedTimeSeconds = nowSeconds();
     }
     this.update();
   }
