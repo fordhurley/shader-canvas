@@ -1,0 +1,44 @@
+import { WebGLRenderer } from "three";
+import { SourceMode } from "./detect-mode";
+import { ShaderErrorMessage } from "./parse-error-messages";
+declare type Renderer = WebGLRenderer;
+export declare const Renderer: typeof WebGLRenderer;
+export declare type ShaderErrorMessage = ShaderErrorMessage;
+export declare type SourceMode = SourceMode;
+export declare class ShaderCanvas {
+    domElement: HTMLCanvasElement;
+    paused: boolean;
+    buildTextureURL: (url: string) => string;
+    onShaderLoad: () => void;
+    onShaderError: (messages: ShaderErrorMessage[]) => void;
+    onTextureLoad: () => void;
+    onTextureError: (textureURL: string) => void;
+    private renderer;
+    private rendererIsOwned;
+    private scene;
+    private camera;
+    private mesh;
+    private startTimeSeconds;
+    private pausedTimeSeconds;
+    private uniforms;
+    private textures;
+    private animationFrameRequest;
+    constructor(options?: {
+        domElement?: HTMLCanvasElement;
+        renderer?: Renderer;
+    });
+    setShader(source: string, mode?: SourceMode): void;
+    loadShader(url: string): void;
+    private buildMaterial;
+    setSize(width: number, height: number): void;
+    setTime(timeSeconds: number): void;
+    render(): void;
+    private setTextures;
+    private addTexture;
+    private removeTexture;
+    dispose(): void;
+    private onMouseMove;
+    private update;
+    togglePause(): void;
+}
+export {};

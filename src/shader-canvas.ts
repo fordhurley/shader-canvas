@@ -45,7 +45,12 @@ function extractDiagnostics(material: any): any {
   return program.diagnostics;
 }
 
-export type Renderer = WebGLRenderer;
+function nowSeconds(): number {
+  return performance.now() / 1000;
+}
+
+type Renderer = WebGLRenderer;
+export const Renderer = WebGLRenderer;
 export type ShaderErrorMessage = ShaderErrorMessage;
 export type SourceMode = SourceMode;
 
@@ -70,7 +75,7 @@ export class ShaderCanvas {
   private startTimeSeconds: number;
   private pausedTimeSeconds: number;
 
-  private uniforms: any; // TODO
+  private uniforms: {[name: string]: {value: any}};
   private textures: {[textureID: string]: TextureDirective};
 
   private animationFrameRequest: number | undefined;
@@ -101,25 +106,26 @@ export class ShaderCanvas {
 
     this.render();
 
-    this.startTimeSeconds = performance.now() / 1000;
+    this.startTimeSeconds = nowSeconds();
     this.pausedTimeSeconds = 0;
     this.paused = false;
 
     this.uniforms = {
-      iGlobalTime: {value: 0},
-      iResolution: {value: new Vector2()},
-      iMouse: {value: new Vector2()},
       u_time: {value: 0},
       u_resolution: {value: new Vector2()},
       u_mouse: {value: new Vector2()},
     };
+    // Mirror these values for legacy shaders:
+    this.uniforms.iGlobalTime = this.uniforms.u_time;
+    this.uniforms.iResolution = this.uniforms.u_resolution;
+    this.uniforms.iMouse = this.uniforms.u_mouse;
 
     this.textures = {};
 
     this.mesh = new Mesh(new PlaneBufferGeometry(2, 2));
 
-    this.renderer.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
-    // Don't need to remove this, because we'll just remove the element.
+    this.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
+    // TODO: remove this listener in dispose()
 
     this.update = this.update.bind(this);
     this.update();
@@ -203,10 +209,8 @@ export class ShaderCanvas {
   public setSize(width: number, height: number): void {
     const dpr = window.devicePixelRatio;
 
-    this.uniforms.iResolution.value.x = width * dpr;
-    this.uniforms.iResolution.value.y = height * dpr;
-    this.uniforms.u_resolution.value.x = this.uniforms.iResolution.value.x;
-    this.uniforms.u_resolution.value.y = this.uniforms.iResolution.value.y;
+    this.uniforms.u_resolution.value.x = width * dpr;
+    this.uniforms.u_resolution.value.y = height * dpr;
 
     this.renderer.setSize(width, height);
     if (!this.rendererIsOwned) {
@@ -218,7 +222,6 @@ export class ShaderCanvas {
   }
 
   public setTime(timeSeconds: number) {
-    this.uniforms.iGlobalTime.value = timeSeconds;
     this.uniforms.u_time.value = timeSeconds;
   }
 
@@ -308,22 +311,21 @@ export class ShaderCanvas {
     if (this.animationFrameRequest !== undefined) {
       cancelAnimationFrame(this.animationFrameRequest);
     }
+
+    // TODO: only remove this if we created it
     this.domElement.remove();
   }
 
   private onMouseMove(event: MouseEvent) {
     const {width, height} = this.renderer.getSize();
-
-    this.uniforms.iMouse.value.x = event.offsetX / width;
-    this.uniforms.iMouse.value.y = 1 - (event.offsetY / height);
-    this.uniforms.u_mouse.value.x = this.uniforms.iMouse.value.x;
-    this.uniforms.u_mouse.value.y = this.uniforms.iMouse.value.y;
+    this.uniforms.u_mouse.value.x = event.offsetX / width;
+    this.uniforms.u_mouse.value.y = 1 - (event.offsetY / height);
   }
 
   private update() {
     if (this.paused) { return; }
     this.animationFrameRequest = requestAnimationFrame(this.update);
-    this.setTime((performance.now() / 1000) - this.startTimeSeconds);
+    this.setTime(nowSeconds() - this.startTimeSeconds);
     this.render();
   }
 
@@ -332,9 +334,9 @@ export class ShaderCanvas {
     if (!this.paused) {
       // Unpaused now, so move our start time up to account for the time we
       // spent paused:
-      this.startTimeSeconds += (performance.now() / 1000) - this.pausedTimeSeconds;
+      this.startTimeSeconds += nowSeconds() - this.pausedTimeSeconds;
     } else {
-      this.pausedTimeSeconds = performance.now() / 1000;
+      this.pausedTimeSeconds = nowSeconds();
     }
     this.update();
   }
