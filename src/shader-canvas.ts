@@ -111,13 +111,14 @@ export class ShaderCanvas {
     this.paused = false;
 
     this.uniforms = {
-      iGlobalTime: {value: 0},
-      iResolution: {value: new Vector2()},
-      iMouse: {value: new Vector2()},
       u_time: {value: 0},
       u_resolution: {value: new Vector2()},
       u_mouse: {value: new Vector2()},
     };
+    // Mirror these values for legacy shaders:
+    this.uniforms.iGlobalTime = this.uniforms.u_time;
+    this.uniforms.iResolution = this.uniforms.u_resolution;
+    this.uniforms.iMouse = this.uniforms.u_mouse;
 
     this.textures = {};
 
@@ -208,10 +209,8 @@ export class ShaderCanvas {
   public setSize(width: number, height: number): void {
     const dpr = window.devicePixelRatio;
 
-    this.uniforms.iResolution.value.x = width * dpr;
-    this.uniforms.iResolution.value.y = height * dpr;
-    this.uniforms.u_resolution.value.x = this.uniforms.iResolution.value.x;
-    this.uniforms.u_resolution.value.y = this.uniforms.iResolution.value.y;
+    this.uniforms.u_resolution.value.x = width * dpr;
+    this.uniforms.u_resolution.value.y = height * dpr;
 
     this.renderer.setSize(width, height);
     if (!this.rendererIsOwned) {
@@ -223,7 +222,6 @@ export class ShaderCanvas {
   }
 
   public setTime(timeSeconds: number) {
-    this.uniforms.iGlobalTime.value = timeSeconds;
     this.uniforms.u_time.value = timeSeconds;
   }
 
@@ -320,11 +318,8 @@ export class ShaderCanvas {
 
   private onMouseMove(event: MouseEvent) {
     const {width, height} = this.renderer.getSize();
-
-    this.uniforms.iMouse.value.x = event.offsetX / width;
-    this.uniforms.iMouse.value.y = 1 - (event.offsetY / height);
-    this.uniforms.u_mouse.value.x = this.uniforms.iMouse.value.x;
-    this.uniforms.u_mouse.value.y = this.uniforms.iMouse.value.y;
+    this.uniforms.u_mouse.value.x = event.offsetX / width;
+    this.uniforms.u_mouse.value.y = 1 - (event.offsetY / height);
   }
 
   private update() {
