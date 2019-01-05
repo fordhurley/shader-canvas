@@ -75,7 +75,7 @@ export class ShaderCanvas {
   private startTimeSeconds: number;
   private pausedTimeSeconds: number;
 
-  private uniforms: any; // TODO
+  private uniforms: {[name: string]: {value: any}};
   private textures: {[textureID: string]: TextureDirective};
 
   private animationFrameRequest: number | undefined;
