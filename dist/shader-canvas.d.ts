@@ -27,7 +27,7 @@ export declare class ShaderCanvas {
         domElement?: HTMLCanvasElement;
         renderer?: Renderer;
     });
-    setShader(source: string, mode?: SourceMode): void;
+    setShader(source: string, mode?: SourceMode): Promise<ShaderCanvas>;
     loadShader(url: string): void;
     private buildMaterial;
     setSize(width: number, height: number): void;
