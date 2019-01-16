@@ -141,7 +141,7 @@ export class ShaderCanvas {
 
     const texPromise = this.setTextures(newTextures);
 
-    const shaderPromise = new Promise<ShaderCanvas>((resolve, reject) => {
+    const shaderPromise = new Promise<null>((resolve, reject) => {
       const oldMaterial = this.mesh.material as ShaderMaterial;
       this.mesh.material = this.buildMaterial(source, mode);
 
