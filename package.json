@@ -13,9 +13,9 @@
     "css-loader": "^2.1.0",
     "html-webpack-plugin": "^3.2.0",
     "style-loader": "^0.23.0",
-    "ts-loader": "^5.1.1",
-    "tslint": "^5.11.0",
-    "typescript": "^3.0.3",
+    "ts-loader": "^5.3.3",
+    "tslint": "^5.12.1",
+    "typescript": "^3.2.2",
     "webpack": "^4.19.1",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.14"
