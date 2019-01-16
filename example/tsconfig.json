@@ -1,9 +1,17 @@
 {
   "compilerOptions": {
+    "module": "commonjs",
+    "noLib": false,
+    "preserveConstEnums": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "declaration": true,
+    "strict": true,
+    "target": "es2017",
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
-    "module": "es6",
-    "target": "es5",
-    "allowJs": true,
-    "sourceMap": true
+    "noImplicitThis": true
   }
 }
