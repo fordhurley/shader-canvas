@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const three_1 = require("three");
+const Three_1 = require("three/src/Three");
 const detect_mode_1 = require("./detect-mode");
 const parse_error_messages_1 = require("./parse-error-messages");
 const parse_texture_directives_1 = require("./parse-texture-directives");
@@ -34,12 +34,12 @@ function extractDiagnostics(material) {
 function nowSeconds() {
     return performance.now() / 1000;
 }
-exports.Renderer = three_1.WebGLRenderer;
+exports.Renderer = Three_1.WebGLRenderer;
 class ShaderCanvas {
     constructor(options = {}) {
         this.domElement = options.domElement || document.createElement("canvas");
         this.rendererIsOwned = options.renderer === undefined;
-        this.renderer = options.renderer || new three_1.WebGLRenderer({ canvas: this.domElement });
+        this.renderer = options.renderer || new Three_1.WebGLRenderer({ canvas: this.domElement });
         this.renderer.setPixelRatio(window.devicePixelRatio);
         // Override these for different behavior:
         this.buildTextureURL = (filePath) => filePath;
@@ -52,8 +52,8 @@ class ShaderCanvas {
         this.onTextureError = (textureURL) => {
             throw new Error("error loading texture " + textureURL);
         };
-        this.scene = new three_1.Scene();
-        this.camera = new three_1.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+        this.scene = new Three_1.Scene();
+        this.camera = new Three_1.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
         this.camera.position.z = 1;
         this.render();
         this.startTimeSeconds = nowSeconds();
@@ -61,15 +61,15 @@ class ShaderCanvas {
         this.paused = false;
         this.uniforms = {
             u_time: { value: 0 },
-            u_resolution: { value: new three_1.Vector2() },
-            u_mouse: { value: new three_1.Vector2() },
+            u_resolution: { value: new Three_1.Vector2() },
+            u_mouse: { value: new Three_1.Vector2() },
         };
         // Mirror these values for legacy shaders:
         this.uniforms.iGlobalTime = this.uniforms.u_time;
         this.uniforms.iResolution = this.uniforms.u_resolution;
         this.uniforms.iMouse = this.uniforms.u_mouse;
         this.textures = {};
-        this.mesh = new three_1.Mesh(new three_1.PlaneBufferGeometry(2, 2));
+        this.mesh = new Three_1.Mesh(new Three_1.PlaneBufferGeometry(2, 2));
         this.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
         // TODO: remove this listener in dispose()
         this.update = this.update.bind(this);
@@ -129,9 +129,9 @@ class ShaderCanvas {
         xhr.send();
     }
     buildMaterial(source, mode) {
-        const Material = mode === "bare" ? three_1.RawShaderMaterial : three_1.ShaderMaterial;
+        const Material = mode === "bare" ? Three_1.RawShaderMaterial : Three_1.ShaderMaterial;
         let vertexShader = bareVertexShader;
-        if (Material === three_1.ShaderMaterial) {
+        if (Material === Three_1.ShaderMaterial) {
             vertexShader = legacyVertexShader;
         }
         let fragmentShader = source;
@@ -214,7 +214,7 @@ class ShaderCanvas {
                 this.onTextureError(textureURL);
                 reject(e);
             };
-            const texture = new three_1.TextureLoader().load(textureURL, onLoad, undefined, onError);
+            const texture = new Three_1.TextureLoader().load(textureURL, onLoad, undefined, onError);
             this.uniforms[textureID] = { value: texture };
             this.textures[textureID] = { textureID, filePath };
             this.mesh.material.needsUpdate = true;

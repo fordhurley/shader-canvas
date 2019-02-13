@@ -1,4 +1,4 @@
-import { WebGLRenderer } from "three";
+import { WebGLRenderer } from "three/src/Three";
 import { SourceMode } from "./detect-mode";
 import { ShaderErrorMessage } from "./parse-error-messages";
 declare type Renderer = WebGLRenderer;

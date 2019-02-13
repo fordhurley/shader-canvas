@@ -8,7 +8,7 @@ import {
   TextureLoader,
   Vector2,
   WebGLRenderer,
-} from "three";
+} from "three/src/Three";
 
 import {detectMode, SourceMode} from "./detect-mode";
 import {parseErrorMessages, ShaderErrorMessage} from "./parse-error-messages";
