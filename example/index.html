@@ -19,9 +19,16 @@
         const shaderCanvas = new ShaderCanvas();
         document.body.appendChild(shaderCanvas.domElement);
 
+        shaderCanvas.domElement.addEventListener("click", function(e) {
+            const w = Math.floor(Math.random() * 400 + 200)
+            const h = Math.floor(Math.random() * 400 + 200)
+            shaderCanvas.setSize(w, h);
+            e.preventDefault();
+        });
+
         const animate = () => {
             window.requestAnimationFrame(animate);
-            shaderCanvas.render()
+            shaderCanvas.render();
         }
         window.requestAnimationFrame(animate);
     </script>

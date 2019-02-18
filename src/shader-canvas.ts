@@ -22,9 +22,14 @@ const defaultFragmentShader = `
 
 export class ShaderCanvas {
   public domElement: HTMLCanvasElement;
-  public gl: WebGLRenderingContext;
+
+  // initialized by calling setSize in the constructor
+  public width!: number;
+  public height!: number;
 
   // private uniforms: {[name: string]: any};
+
+  private gl: WebGLRenderingContext;
 
   private vertexShader: WebGLShader;
   private fragmentShader: WebGLShader;
@@ -49,6 +54,9 @@ export class ShaderCanvas {
   }
 
   public setSize(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+
     const dpr = window.devicePixelRatio;
     this.domElement.width = width * dpr;
     this.domElement.height = height * dpr;
