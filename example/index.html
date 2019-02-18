@@ -1,0 +1,46 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <style>
+        html {
+            box-sizing: border-box;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        body > * {
+            margin: 2em;
+        }
+        .placeholder {
+            background-color: gray;
+            text-align: center;
+            padding: 2em;
+        }
+        .success {
+            background-color: green;
+        }
+        .error {
+            background-color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="module">
+        import {ShaderCanvas} from "../dist/shader-canvas.js";
+
+        const shaderCanvas = new ShaderCanvas();
+        document.body.appendChild(shaderCanvas.domElement);
+
+        const animate = () => {
+            window.requestAnimationFrame(animate);
+            shaderCanvas.render()
+        }
+        window.requestAnimationFrame(animate);
+    </script>
+</body>
+</html>

@@ -1,8 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
 const newLineRegex = /\r?\n/;
-function parseErrorMessages(msg, prefix) {
+export function parseErrorMessages(msg, prefix) {
     const out = [];
     let match = errorRegex.exec(msg);
     while (match) {
@@ -20,5 +18,4 @@ function parseErrorMessages(msg, prefix) {
     }
     return out;
 }
-exports.parseErrorMessages = parseErrorMessages;
 //# sourceMappingURL=parse-error-messages.js.map
