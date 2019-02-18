@@ -38,12 +38,7 @@ export class ShaderCanvas {
     this.fragmentShader = loadShader(this.gl, this.gl.FRAGMENT_SHADER, defaultFragmentShader)!;
     this.shaderProgram = compileShader(this.gl, this.vertexShader, this.fragmentShader)!;
 
-    const positionLocation = this.gl.getAttribLocation(this.shaderProgram, "position");
-
-    const buffer = initPositionBuffer(this.gl);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-    this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
-    this.gl.enableVertexAttribArray(positionLocation);
+    bindPositionAttribute(this.gl, this.shaderProgram);
 
     this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     this.gl.useProgram(this.shaderProgram);
@@ -104,7 +99,7 @@ function compileShader(gl: WebGLRenderingContext, vs: WebGLShader, fs: WebGLShad
   return program;
 }
 
-function initPositionBuffer(gl: WebGLRenderingContext) {
+function bindPositionAttribute(gl: WebGLRenderingContext, program: WebGLProgram) {
   const buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 
@@ -116,5 +111,8 @@ function initPositionBuffer(gl: WebGLRenderingContext) {
   ]);
   gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 
-  return buffer;
+  const positionLocation = gl.getAttribLocation(program, "position");
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(positionLocation);
 }
