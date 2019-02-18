@@ -14,6 +14,7 @@
   "scripts": {
     "lint": "tslint --project ./src",
     "typecheck": "tsc --noEmit --project ./src",
-    "build": "tsc --project ./src"
+    "build": "tsc --project ./src",
+    "watch": "tsc --watch --project ./src"
   }
 }
