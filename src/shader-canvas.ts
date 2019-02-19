@@ -39,8 +39,8 @@ export class ShaderCanvas {
     this.domElement = document.createElement("canvas");
     this.gl = this.domElement.getContext("webgl")!;
 
-    this.vertexShader = loadShader(this.gl, this.gl.VERTEX_SHADER, defaultVertexShader)!;
-    this.fragmentShader = loadShader(this.gl, this.gl.FRAGMENT_SHADER, defaultFragmentShader)!;
+    this.vertexShader = createShader(this.gl, this.gl.VERTEX_SHADER, defaultVertexShader)!;
+    this.fragmentShader = createShader(this.gl, this.gl.FRAGMENT_SHADER, defaultFragmentShader)!;
     this.shaderProgram = compileShader(this.gl, this.vertexShader, this.fragmentShader)!;
 
     bindPositionAttribute(this.gl, this.shaderProgram);
@@ -86,7 +86,7 @@ export class ShaderCanvas {
   }
 }
 
-function loadShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
+function createShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader | null {
   const shader = gl.createShader(type);
   if (shader === null) {
     return null;
