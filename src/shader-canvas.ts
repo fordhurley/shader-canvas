@@ -76,7 +76,7 @@ export class ShaderCanvas {
         throw new Error("failed to compile, but found no error log");
       }
       console.error(info);
-      console.error(parseErrorMessages(info, ""));
+      console.error(parseErrorMessages(info));
       return;
     }
 
@@ -148,29 +148,26 @@ function bindPositionAttribute(gl: WebGLRenderingContext, program: WebGLProgram)
 // TODO: put this in its own module, but that wasn't working with the browser
 // module importing stuff. Decided to just inline this instead of figure that out.
 
-const errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
-const newLineRegex = /\r?\n/;
+const errorRegex = /^ERROR: \d+:(\d+).*$/mg;
 
 export interface ShaderErrorMessage {
   text: string;
   lineNumber: number;
 }
 
-function parseErrorMessages(msg: string, prefix: string): ShaderErrorMessage[] {
-  const out = [];
+function parseErrorMessages(msg: string): ShaderErrorMessage[] {
+  const messages = [];
+
   let match = errorRegex.exec(msg);
   while (match) {
-    let errorLineNumber = -1;
-    const lineNumber = parseInt(match[2], 10);
-    if (lineNumber !== null) {
-      const prefixLines = prefix.split(newLineRegex).length;
-      errorLineNumber = lineNumber - prefixLines + 1;
-    }
-    out.push({
-      lineNumber: errorLineNumber,
-      text: `${match[1]}${errorLineNumber}:1${match[3]}`,
+    messages.push({
+      text: match[0],
+      lineNumber: parseInt(match[1], 10),
     });
+
+    // Look for another error:
     match = errorRegex.exec(msg);
   }
-  return out;
+
+  return messages;
 }
