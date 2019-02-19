@@ -38,7 +38,18 @@
                 }
             `);
             shaderCanvas.render();
-        }, 2000)
+        }, 2000);
+
+        setTimeout(() => {
+            // ERROR! no uv declaration
+            shaderCanvas.setShader(`
+                precision mediump float;
+                void main() {
+                    gl_FragColor = vec4(uv, 1.0, 1.0);
+                }
+            `);
+            shaderCanvas.render();
+        }, 5000);
     </script>
 </body>
 </html>

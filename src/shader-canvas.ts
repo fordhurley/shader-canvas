@@ -71,7 +71,13 @@ export class ShaderCanvas {
     gl.shaderSource(this.fragmentShader, source);
     gl.compileShader(this.fragmentShader);
     if (!gl.getShaderParameter(this.fragmentShader, gl.COMPILE_STATUS)) {
-      console.error(gl.getShaderInfoLog(this.fragmentShader));
+      const info = gl.getShaderInfoLog(this.fragmentShader);
+      if (!info) {
+        throw new Error("failed to compile, but found no error log");
+      }
+      console.error(info);
+      console.error(parseErrorMessages(info, ""));
+      return;
     }
 
     gl.linkProgram(this.shaderProgram);
@@ -137,4 +143,34 @@ function bindPositionAttribute(gl: WebGLRenderingContext, program: WebGLProgram)
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(positionLocation);
+}
+
+// TODO: put this in its own module, but that wasn't working with the browser
+// module importing stuff. Decided to just inline this instead of figure that out.
+
+const errorRegex = /^(ERROR: )\d+:(\d+)(.*)$/mg;
+const newLineRegex = /\r?\n/;
+
+export interface ShaderErrorMessage {
+  text: string;
+  lineNumber: number;
+}
+
+function parseErrorMessages(msg: string, prefix: string): ShaderErrorMessage[] {
+  const out = [];
+  let match = errorRegex.exec(msg);
+  while (match) {
+    let errorLineNumber = -1;
+    const lineNumber = parseInt(match[2], 10);
+    if (lineNumber !== null) {
+      const prefixLines = prefix.split(newLineRegex).length;
+      errorLineNumber = lineNumber - prefixLines + 1;
+    }
+    out.push({
+      lineNumber: errorLineNumber,
+      text: `${match[1]}${errorLineNumber}:1${match[3]}`,
+    });
+    match = errorRegex.exec(msg);
+  }
+  return out;
 }
