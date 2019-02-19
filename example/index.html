@@ -23,14 +23,22 @@
             const w = Math.floor(Math.random() * 400 + 200)
             const h = Math.floor(Math.random() * 400 + 200)
             shaderCanvas.setSize(w, h);
+            shaderCanvas.render();
             e.preventDefault();
         });
 
-        const animate = () => {
-            window.requestAnimationFrame(animate);
+        shaderCanvas.render();
+
+        setTimeout(() => {
+            shaderCanvas.setShader(`
+                precision mediump float;
+                varying vec2 uv;
+                void main() {
+                    gl_FragColor = vec4(uv, 1.0, 1.0);
+                }
+            `);
             shaderCanvas.render();
-        }
-        window.requestAnimationFrame(animate);
+        }, 2000)
     </script>
 </body>
 </html>

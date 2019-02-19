@@ -66,6 +66,20 @@ export class ShaderCanvas {
     this.gl.viewport(0, 0, this.domElement.width, this.domElement.height);
   }
 
+  public setShader(source: string) {
+    const gl = this.gl;
+    gl.shaderSource(this.fragmentShader, source);
+    gl.compileShader(this.fragmentShader);
+    if (!gl.getShaderParameter(this.fragmentShader, gl.COMPILE_STATUS)) {
+      console.error(gl.getShaderInfoLog(this.fragmentShader));
+    }
+
+    gl.linkProgram(this.shaderProgram);
+    if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
+      console.error(gl.getProgramInfoLog(this.shaderProgram));
+    }
+  }
+
   public render() {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
