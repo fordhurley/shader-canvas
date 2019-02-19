@@ -20,6 +20,12 @@ const defaultFragmentShader = `
   }
 `;
 
+interface Uniform {
+  name: string;
+  value: number[]; // for now, supporting only float and vec[234] with this
+  location: WebGLUniformLocation;
+}
+
 export class ShaderCanvas {
   public domElement: HTMLCanvasElement;
 
@@ -27,7 +33,7 @@ export class ShaderCanvas {
   public width!: number;
   public height!: number;
 
-  // private uniforms: {[name: string]: any};
+  private uniforms: {[name: string]: Uniform};
 
   private gl: WebGLRenderingContext;
 
@@ -48,7 +54,7 @@ export class ShaderCanvas {
     this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
     this.gl.useProgram(this.shaderProgram);
 
-    // this.uniforms = {};
+    this.uniforms = {};
 
     this.setSize(400, 400);
   }
@@ -84,6 +90,35 @@ export class ShaderCanvas {
     if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
       console.error(gl.getProgramInfoLog(this.shaderProgram));
     }
+  }
+
+  // TODO: be more specific with the value types allowed
+  public setUniform(name: string, value: number[]) {
+    // TODO: validate name?
+    let uniform = this.uniforms[name];
+    if (!uniform) {
+      // TODO: maybe do this unconditionally? in case the shader had changed?
+      const location = this.gl.getUniformLocation(this.shaderProgram, name);
+      if (location === null) {
+        throw new Error(`uniform location for ${name} not found`);
+      }
+      uniform = {name, value, location};
+    }
+    this.uniforms[name] = uniform;
+
+    const setter = [
+      undefined,
+      this.gl.uniform1fv,
+      this.gl.uniform2fv,
+      this.gl.uniform3fv,
+      this.gl.uniform4fv,
+    ][value.length];
+
+    if (!setter) {
+      throw new Error(`uniform is unexpected length: ${value.length}`);
+    }
+
+    setter.call(this.gl, uniform.location, value);
   }
 
   public render() {
