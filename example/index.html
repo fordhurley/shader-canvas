@@ -53,11 +53,13 @@
         addControl("pretty gradient shader", (e) => {
             shaderCanvas.setShader(`
                 precision mediump float;
-                varying vec2 uv;
+                uniform vec2 u_resolution;
                 void main() {
+                    vec2 uv = gl_FragCoord.xy / u_resolution;
                     gl_FragColor = vec4(uv, 1.0, 1.0);
                 }
             `);
+            shaderCanvas.setUniform("u_resolution", [shaderCanvas.width * window.devicePixelRatio, shaderCanvas.height * window.devicePixelRatio]);
             shaderCanvas.render();
             e.preventDefault();
         });
@@ -65,11 +67,13 @@
         addControl("useful gradient shader", (e) => {
             shaderCanvas.setShader(`
                 precision mediump float;
-                varying vec2 uv;
+                uniform vec2 u_resolution;
                 void main() {
+                    vec2 uv = gl_FragCoord.xy / u_resolution;
                     gl_FragColor = vec4(uv.x, 0.0, uv.y, 1.0);
                 }
             `);
+            shaderCanvas.setUniform("u_resolution", [shaderCanvas.width * window.devicePixelRatio, shaderCanvas.height * window.devicePixelRatio]);
             shaderCanvas.render();
             e.preventDefault();
         });
@@ -77,14 +81,16 @@
         addControl("animated shader", (e) => {
             shaderCanvas.setShader(`
                 precision mediump float;
-                varying vec2 uv;
+                uniform vec2 u_resolution;
                 uniform float u_time;
                 uniform vec2 u_mouse;
                 void main() {
+                    vec2 uv = gl_FragCoord.xy / u_resolution;
                     float t = sin(u_time * 2.0) * 0.5 + 0.5;
                     gl_FragColor = vec4(uv, t, 1.0);
                 }
             `);
+            shaderCanvas.setUniform("u_resolution", [shaderCanvas.width * window.devicePixelRatio, shaderCanvas.height * window.devicePixelRatio]);
             shaderCanvas.setUniform("u_time", [0]);
             const animate = (timestamp) => {
                 window.requestAnimationFrame(animate);
@@ -98,15 +104,17 @@
         addControl("interactive shader", (e) => {
             shaderCanvas.setShader(`
                 precision mediump float;
-                varying vec2 uv;
+                uniform vec2 uv;
                 uniform vec2 u_mouse;
                 void main() {
+                    vec2 uv = gl_FragCoord.xy / u_resolution;
                     gl_FragColor = vec4(uv.x, 0.0, uv.y, 1.0);
                     if (distance(uv, u_mouse) < 0.1) {
                         gl_FragColor = vec4(uv.y, 0.0, uv.x, 1.0);
                     }
                 }
             `);
+            shaderCanvas.setUniform("u_resolution", [shaderCanvas.width * window.devicePixelRatio, shaderCanvas.height * window.devicePixelRatio]);
             shaderCanvas.setUniform("u_mouse", [0.5, 0.5]);
             shaderCanvas.domElement.addEventListener("mousemove", (e) => {
                 const newValue = [

@@ -3,9 +3,7 @@ const defaultVertexShader = `
   precision mediump float;
   #endif
   attribute vec2 position;
-  varying vec2 uv;
   void main() {
-    uv = position * 0.5 + 0.5;
     gl_Position = vec4(position, 0.0, 1.0);
   }
 `;
@@ -14,9 +12,8 @@ const defaultFragmentShader = `
   #ifdef GL_ES
   precision mediump float;
   #endif
-  varying vec2 uv;
   void main() {
-    gl_FragColor = vec4(uv.x, 0.0, uv.y, 1.0);
+    gl_FragColor = vec4(0.0);
   }
 `;
 
