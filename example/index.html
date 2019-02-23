@@ -1,16 +1,23 @@
 <html>
 <head>
     <meta charset="utf-8"/>
+    <style>
+        .error {
+            color: red;
+        }
+    </style>
 </head>
 
 <body>
     <div class="canvases"></div>
+    <pre class="error"></pre>
     <ul class="controls"></ul>
 
     <script type="module">
         import {ShaderCanvas} from "../dist/shader-canvas.js";
 
         const canvases = document.querySelector(".canvases");
+        const error = document.querySelector(".error");
         const controls = document.querySelector(".controls");
 
         const shaderCanvas = new ShaderCanvas();
@@ -30,6 +37,10 @@
             controls.appendChild(li)
         }
 
+        function setError(msg) {
+            error.textContent = msg;
+        }
+
         addControl("randomize size", (e) => {
             const min = 200;
             const max = 600;
@@ -42,6 +53,7 @@
         });
 
         addControl("pretty gradient shader", (e) => {
+            setError("")
             shaderCanvas.setShader(`
                 precision mediump float;
                 uniform vec2 u_resolution;
@@ -56,6 +68,7 @@
         });
 
         addControl("useful gradient shader", (e) => {
+            setError("")
             shaderCanvas.setShader(`
                 precision mediump float;
                 uniform vec2 u_resolution;
@@ -70,6 +83,7 @@
         });
 
         addControl("animated shader", (e) => {
+            setError("")
             shaderCanvas.setShader(`
                 precision mediump float;
                 uniform vec2 u_resolution;
@@ -93,6 +107,7 @@
         });
 
         addControl("interactive shader", (e) => {
+            setError("")
             shaderCanvas.setShader(`
                 precision mediump float;
                 uniform vec2 u_resolution;
@@ -121,16 +136,22 @@
 
         addControl("bad shader", (e) => {
             // ERROR! no uv declaration
-            shaderCanvas.setShader(`
+            let msg = "";
+            const errs = shaderCanvas.setShader(`
                 precision mediump float;
                 void main() {
                     gl_FragColor = vec4(uv, 1.0, 1.0);
                 }
             `);
+            errs.forEach((err) => {
+                msg += err.text + "\n";
+            })
+            setError(msg);
             e.preventDefault();
         });
 
         addControl("texture", (e) => {
+            setError("")
             shaderCanvas.setShader(`
                 precision mediump float;
 
@@ -164,6 +185,7 @@
         });
 
         addControl("two textures", (e) => {
+            setError("")
             shaderCanvas.setShader(`
                 precision mediump float;
 

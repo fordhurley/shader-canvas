@@ -65,7 +65,7 @@ export class ShaderCanvas {
     this.gl.viewport(0, 0, this.domElement.width, this.domElement.height);
   }
 
-  public setShader(source: string) {
+  public setShader(source: string): ShaderErrorMessage[] {
     const gl = this.gl;
     gl.shaderSource(this.fragmentShader, source);
     gl.compileShader(this.fragmentShader);
@@ -75,14 +75,16 @@ export class ShaderCanvas {
         throw new Error("failed to compile, but found no error log");
       }
       console.error(info);
-      console.error(parseErrorMessages(info));
-      return;
+      return parseErrorMessages(info);
     }
 
     gl.linkProgram(this.shaderProgram);
     if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
       console.error(gl.getProgramInfoLog(this.shaderProgram));
+      throw new Error("failed to link program");
     }
+
+    return [];
   }
 
   // TODO: be more specific with the value types allowed
