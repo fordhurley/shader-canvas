@@ -1,0 +1,17 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/shader-canvas
+    docker:
+      - image: circleci/node:latest
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run: yarn install
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - ./node_modules
+      - run: yarn run lint
+      - run: yarn run build
