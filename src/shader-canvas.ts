@@ -25,9 +25,8 @@ interface Texture {
 export class ShaderCanvas {
   public domElement: HTMLCanvasElement;
 
-  // initialized by calling setSize in the constructor
-  public width!: number;
-  public height!: number;
+  public width: number = 0;
+  public height: number = 0;
 
   private gl: WebGLRenderingContext;
 
