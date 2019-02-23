@@ -1,18 +1,11 @@
 {
   "compilerOptions": {
     "module": "es6",
-    "noLib": false,
     "outDir": "../dist",
     "preserveConstEnums": true,
-    "skipLibCheck": true,
+    "strict": true,
     "sourceMap": true,
     "declaration": true,
-    "strict": true,
-    "target": "es2017",
-    "noUnusedParameters": true,
-    "noUnusedLocals": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true
+    "target": "es2017"
   }
 }
