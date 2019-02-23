@@ -105,6 +105,29 @@ export class ShaderCanvas {
     setter.call(this.gl, location, value);
   }
 
+  // TODO: support multiple textures and some options
+  public setTexture(name: string, image: HTMLImageElement) {
+    // TODO: validate name?
+
+    const gl = this.gl;
+
+    const location = gl.getUniformLocation(this.shaderProgram, name);
+    if (location === null) {
+      throw new Error(`uniform location for texture ${name} not found`);
+    }
+
+    const texture = gl.createTexture();
+    if (!texture) {
+      throw new Error(`unable to create texture`);
+    }
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  }
+
   public render() {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
