@@ -81,21 +81,11 @@
                 uniform float u_time;
                 uniform vec2 u_mouse;
                 void main() {
-                    gl_FragColor = vec4(uv, 1.0, 1.0);
-                    float d = distance(uv, u_mouse);
-                    float r = sin(u_time) * 0.1 + 0.2;
-                    gl_FragColor *= step(r, d);
+                    float t = sin(u_time * 2.0) * 0.5 + 0.5;
+                    gl_FragColor = vec4(uv, t, 1.0);
                 }
             `);
             shaderCanvas.setUniform("u_time", [0]);
-            shaderCanvas.setUniform("u_mouse", [0.5, 0.5]);
-            shaderCanvas.domElement.addEventListener("mousemove", (e) => {
-                const newValue = [
-                    e.offsetX / shaderCanvas.width,
-                    1 - (e.offsetY / shaderCanvas.height),
-                ]
-                shaderCanvas.setUniform("u_mouse", newValue);
-            });
             const animate = (timestamp) => {
                 window.requestAnimationFrame(animate);
                 shaderCanvas.setUniform("u_time", [timestamp / 1000]);
@@ -104,6 +94,31 @@
             window.requestAnimationFrame(animate);
             e.preventDefault();
         });
+
+        addControl("interactive shader", (e) => {
+            shaderCanvas.setShader(`
+                precision mediump float;
+                varying vec2 uv;
+                uniform vec2 u_mouse;
+                void main() {
+                    gl_FragColor = vec4(uv.x, 0.0, uv.y, 1.0);
+                    if (distance(uv, u_mouse) < 0.1) {
+                        gl_FragColor = vec4(uv.y, 0.0, uv.x, 1.0);
+                    }
+                }
+            `);
+            shaderCanvas.setUniform("u_mouse", [0.5, 0.5]);
+            shaderCanvas.domElement.addEventListener("mousemove", (e) => {
+                const newValue = [
+                    e.offsetX / shaderCanvas.width,
+                    1 - (e.offsetY / shaderCanvas.height),
+                ]
+                shaderCanvas.setUniform("u_mouse", newValue);
+                shaderCanvas.render();
+            });
+            shaderCanvas.render();
+            e.preventDefault();
+        })
 
         addControl("bad shader", (e) => {
             // ERROR! no uv declaration
