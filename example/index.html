@@ -2,34 +2,55 @@
 <head>
     <meta charset="utf-8"/>
     <style>
-        body {
+        .canvases {
             display: flex;
             flex-wrap: wrap;
         }
-        body > * {
+        .canvases > * {
             margin: 2em;
         }
     </style>
 </head>
 
 <body>
+    <div class="canvases"></div>
+
+    <ul class="controls"></ul>
+
     <script type="module">
         import {ShaderCanvas} from "../dist/shader-canvas.js";
 
-        const shaderCanvas = new ShaderCanvas();
-        document.body.appendChild(shaderCanvas.domElement);
+        const canvases = document.querySelector(".canvases");
+        const controls = document.querySelector(".controls");
 
-        shaderCanvas.domElement.addEventListener("click", function(e) {
-            const w = Math.floor(Math.random() * 400 + 200)
-            const h = Math.floor(Math.random() * 400 + 200)
+        const shaderCanvas = new ShaderCanvas();
+        shaderCanvas.render();
+
+        canvases.appendChild(shaderCanvas.domElement);
+
+        function addControl(name, onclick) {
+            const a = document.createElement("a");
+            a.href = "#";
+            a.textContent = name;
+            a.onclick = onclick;
+
+            const li = document.createElement("li");
+            li.appendChild(a);
+
+            controls.appendChild(li)
+        }
+
+        addControl("randomize size", (e) => {
+            const min = 200;
+            const max = 600;
+            const w = Math.floor(Math.random() * (max - min) + min)
+            const h = Math.floor(Math.random() * (max - min) + min)
             shaderCanvas.setSize(w, h);
             shaderCanvas.render();
             e.preventDefault();
         });
 
-        shaderCanvas.render();
-
-        setTimeout(() => {
+        addControl("pretty gradient shader", (e) => {
             shaderCanvas.setShader(`
                 precision mediump float;
                 varying vec2 uv;
@@ -38,9 +59,22 @@
                 }
             `);
             shaderCanvas.render();
-        }, 1000);
+            e.preventDefault();
+        });
 
-        setTimeout(() => {
+        addControl("useful gradient shader", (e) => {
+            shaderCanvas.setShader(`
+                precision mediump float;
+                varying vec2 uv;
+                void main() {
+                    gl_FragColor = vec4(uv.x, 0.0, uv.y, 1.0);
+                }
+            `);
+            shaderCanvas.render();
+            e.preventDefault();
+        });
+
+        addControl("animated shader", (e) => {
             shaderCanvas.setShader(`
                 precision mediump float;
                 varying vec2 uv;
@@ -68,9 +102,10 @@
                 shaderCanvas.render();
             };
             window.requestAnimationFrame(animate);
-        }, 2000);
+            e.preventDefault();
+        });
 
-        setTimeout(() => {
+        addControl("bad shader", (e) => {
             // ERROR! no uv declaration
             shaderCanvas.setShader(`
                 precision mediump float;
@@ -78,8 +113,8 @@
                     gl_FragColor = vec4(uv, 1.0, 1.0);
                 }
             `);
-            shaderCanvas.render();
-        }, 8000);
+            e.preventDefault();
+        });
     </script>
 </body>
 </html>
