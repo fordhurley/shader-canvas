@@ -15,29 +15,35 @@ shaderCanvas.setShader(`
   }
 `);
 shaderCanvas.setSize(400, 400);
-shaderCanvas.setUniform("u_resolution", [400, 400]);
+shaderCanvas.setUniform(
+  "u_resolution",
+  [400 * window.devicePixelRatio, 400 * window.devicePixelRatio],
+);
 document.body.appendChild(shaderCanvas.domElement);
 ```
+
+See [example/index.html](example/index.html) for more examples.
 
 
 ## Development
 
 Install dependencies:
 
-    npm install
+    yarn install
 
 
-Run the typescript build before committing (at least at the end of your PR work),
-and check in the result in `dist/`.
+Run the typescript watcher:
 
-    npm run build
+    yarn run watch
 
 
-Open the example page in your browser. This will auto-reload as the source
-changes. Check that tests on the page are passing.
+Serve the example page:
 
-    npm run example
+    yarn run serve
 
+Open the example page in your browser:
+
+    open http://localhost:8080/example/
 
 ## Credits
 
