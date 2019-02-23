@@ -104,7 +104,7 @@
         addControl("interactive shader", (e) => {
             shaderCanvas.setShader(`
                 precision mediump float;
-                uniform vec2 uv;
+                uniform vec2 u_resolution;
                 uniform vec2 u_mouse;
                 void main() {
                     vec2 uv = gl_FragCoord.xy / u_resolution;
