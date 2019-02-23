@@ -37,8 +37,9 @@
             controls.appendChild(li)
         }
 
-        function setError(msg) {
-            error.textContent = msg;
+        function setShaderAndCheckErrs(source) {
+            const errs = shaderCanvas.setShader(source);
+            error.textContent = errs.map((err) => err.text).join("\n");
         }
 
         addControl("randomize size", (e) => {
@@ -53,8 +54,7 @@
         });
 
         addControl("pretty gradient shader", (e) => {
-            setError("")
-            shaderCanvas.setShader(`
+            setShaderAndCheckErrs(`
                 precision mediump float;
                 uniform vec2 u_resolution;
                 void main() {
@@ -68,8 +68,7 @@
         });
 
         addControl("useful gradient shader", (e) => {
-            setError("")
-            shaderCanvas.setShader(`
+            setShaderAndCheckErrs(`
                 precision mediump float;
                 uniform vec2 u_resolution;
                 void main() {
@@ -83,8 +82,7 @@
         });
 
         addControl("animated shader", (e) => {
-            setError("")
-            shaderCanvas.setShader(`
+            setShaderAndCheckErrs(`
                 precision mediump float;
                 uniform vec2 u_resolution;
                 uniform float u_time;
@@ -107,8 +105,7 @@
         });
 
         addControl("interactive shader", (e) => {
-            setError("")
-            shaderCanvas.setShader(`
+            setShaderAndCheckErrs(`
                 precision mediump float;
                 uniform vec2 u_resolution;
                 uniform vec2 u_mouse;
@@ -136,23 +133,17 @@
 
         addControl("bad shader", (e) => {
             // ERROR! no uv declaration
-            let msg = "";
-            const errs = shaderCanvas.setShader(`
+            setShaderAndCheckErrs(`
                 precision mediump float;
                 void main() {
                     gl_FragColor = vec4(uv, 1.0, 1.0);
                 }
             `);
-            errs.forEach((err) => {
-                msg += err.text + "\n";
-            })
-            setError(msg);
             e.preventDefault();
         });
 
         addControl("texture", (e) => {
-            setError("")
-            shaderCanvas.setShader(`
+            setShaderAndCheckErrs(`
                 precision mediump float;
 
                 uniform vec2 u_resolution;
@@ -185,8 +176,7 @@
         });
 
         addControl("two textures", (e) => {
-            setError("")
-            shaderCanvas.setShader(`
+            setShaderAndCheckErrs(`
                 precision mediump float;
 
                 uniform vec2 u_resolution;
