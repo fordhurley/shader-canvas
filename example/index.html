@@ -5,7 +5,6 @@
 
 <body>
     <div class="canvases"></div>
-
     <ul class="controls"></ul>
 
     <script type="module">
@@ -37,6 +36,7 @@
             const w = Math.floor(Math.random() * (max - min) + min)
             const h = Math.floor(Math.random() * (max - min) + min)
             shaderCanvas.setSize(w, h);
+            shaderCanvas.setUniform("u_resolution", [shaderCanvas.width * window.devicePixelRatio, shaderCanvas.height * window.devicePixelRatio]);
             shaderCanvas.render();
             e.preventDefault();
         });
