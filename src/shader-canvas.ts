@@ -17,6 +17,11 @@ const defaultFragmentShader = `
   }
 `;
 
+interface Texture {
+  glTexture: WebGLTexture;
+  unit: number;
+}
+
 export class ShaderCanvas {
   public domElement: HTMLCanvasElement;
 
@@ -29,6 +34,8 @@ export class ShaderCanvas {
   private vertexShader: WebGLShader;
   private fragmentShader: WebGLShader;
   private shaderProgram: WebGLProgram;
+
+  private textures: {[name: string]: Texture} = {};
 
   constructor() {
     this.domElement = document.createElement("canvas");
@@ -105,27 +112,37 @@ export class ShaderCanvas {
     setter.call(this.gl, location, value);
   }
 
-  // TODO: support multiple textures and some options
+  // TODO: accept options, like format, filter, wrap, etc.
   public setTexture(name: string, image: HTMLImageElement) {
     // TODO: validate name?
 
     const gl = this.gl;
 
-    const location = gl.getUniformLocation(this.shaderProgram, name);
-    if (location === null) {
-      throw new Error(`uniform location for texture ${name} not found`);
+    let t = this.textures[name];
+    if (!t) {
+      const glTexture = gl.createTexture();
+      if (!glTexture) {
+        throw new Error(`unable to create glTexture`);
+      }
+      t = {
+        glTexture,
+        unit: lowestUnused(Object.values(this.textures).map((o) => o.unit)),
+      };
+      this.textures[name] = t;
     }
 
-    const texture = gl.createTexture();
-    if (!texture) {
-      throw new Error(`unable to create texture`);
-    }
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.activeTexture(gl.TEXTURE0 + t.unit);
+    gl.bindTexture(gl.TEXTURE_2D, t.glTexture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+    const location = gl.getUniformLocation(this.shaderProgram, name);
+    if (location === null) {
+      throw new Error(`uniform location for texture ${name} not found`);
+    }
+    gl.uniform1i(location, t.unit);
   }
 
   public render() {
@@ -212,4 +229,28 @@ function parseErrorMessages(msg: string): ShaderErrorMessage[] {
   }
 
   return messages;
+}
+
+// This is a flavor of Shlemiel the painter's algorithm.
+// http://wiki.c2.com/?ShlemielThePainter
+//
+// TODO: figure out how to run tests, but I've spot checked these:
+//   [] => 0
+//   [0, 1, 2, 3, 4] => 5
+//   [0, 1, 3, 4] => 2
+//   [1, 3, 4] => 0
+//   [4] => 0
+//   [4, 3, 2, 1, 0] => 5
+//   [4, 2, 1, 0] => 3
+//   [4, 2, 1, 10] => 0
+//   [2, 0, 3, 4] => 1
+function lowestUnused(xs: number[]): number {
+  let unused = 0;
+  for (let i = 0; i < xs.length; i++) {
+    if (xs[i] === unused) {
+      unused++;
+      i = -1; // go back to the beginning
+    }
+  }
+  return unused;
 }
