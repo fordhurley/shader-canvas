@@ -10,6 +10,7 @@ export declare class ShaderCanvas {
     private textures;
     constructor();
     setSize(width: number, height: number): void;
+    getResolution(): [number, number];
     setShader(source: string): ShaderErrorMessage[];
     setUniform(name: string, value: UniformValue): void;
     setTexture(name: string, image: HTMLImageElement): void;

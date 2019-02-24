@@ -71,6 +71,17 @@ export class ShaderCanvas {
     this.gl.viewport(0, 0, this.domElement.width, this.domElement.height);
   }
 
+  // getResolution is a convenience method for getting a vec2 representing the
+  // size in physical pixels of the canvas.
+  // Typical usage is:
+  //   shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
+  public getResolution(): [number, number] {
+    return [
+      this.domElement.width,
+      this.domElement.height,
+    ];
+  }
+
   public setShader(source: string): ShaderErrorMessage[] {
     const gl = this.gl;
     gl.shaderSource(this.fragmentShader, source);

@@ -53,7 +53,7 @@
             const w = Math.floor(Math.random() * (max - min) + min)
             const h = Math.floor(Math.random() * (max - min) + min)
             shaderCanvas.setSize(w, h);
-            shaderCanvas.setUniform("u_resolution", [shaderCanvas.domElement.width, shaderCanvas.domElement.height]);
+            shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
             shaderCanvas.render();
             e.preventDefault();
         });
@@ -67,7 +67,7 @@
                     gl_FragColor = vec4(uv, 1.0, 1.0);
                 }
             `);
-            shaderCanvas.setUniform("u_resolution", [shaderCanvas.domElement.width, shaderCanvas.domElement.height]);
+            shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
             shaderCanvas.render();
             e.preventDefault();
         });
@@ -81,7 +81,7 @@
                     gl_FragColor = vec4(uv.x, 0.0, uv.y, 1.0);
                 }
             `);
-            shaderCanvas.setUniform("u_resolution", [shaderCanvas.domElement.width, shaderCanvas.domElement.height]);
+            shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
             shaderCanvas.render();
             e.preventDefault();
         });
@@ -98,7 +98,7 @@
                     gl_FragColor = vec4(uv, t, 1.0);
                 }
             `);
-            shaderCanvas.setUniform("u_resolution", [shaderCanvas.domElement.width, shaderCanvas.domElement.height]);
+            shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
             shaderCanvas.setUniform("u_time", 0);
             let animReq;
             const animate = (timestamp) => {
@@ -126,7 +126,7 @@
                     }
                 }
             `);
-            shaderCanvas.setUniform("u_resolution", [shaderCanvas.domElement.width, shaderCanvas.domElement.height]);
+            shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
             shaderCanvas.setUniform("u_mouse", [0.5, 0.5]);
             const mousemove = (e) => {
                 const newValue = [
@@ -178,7 +178,7 @@
                     gl_FragColor = vec4(tex, 1.0);
                 }
             `);
-            shaderCanvas.setUniform("u_resolution", [shaderCanvas.domElement.width, shaderCanvas.domElement.height]);
+            shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
 
             const img = new Image();
             img.src =  "grace_hopper.jpg";
@@ -225,7 +225,7 @@
                     gl_FragColor = vec4(color, 1.0);
                 }
             `);
-            shaderCanvas.setUniform("u_resolution", [shaderCanvas.domElement.width, shaderCanvas.domElement.height]);
+            shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
 
             const mainTex = new Image();
             mainTex.src =  "grace_hopper.jpg";
