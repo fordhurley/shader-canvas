@@ -22,6 +22,12 @@ interface Texture {
   unit: number;
 }
 
+export type UniformValue =
+  number |
+  [number, number] |
+  [number, number, number] |
+  [number, number, number, number];
+
 export class ShaderCanvas {
   public domElement: HTMLCanvasElement;
 
@@ -87,8 +93,7 @@ export class ShaderCanvas {
     return [];
   }
 
-  // TODO: be more specific with the value types allowed
-  public setUniform(name: string, value: number[]) {
+  public setUniform(name: string, value: UniformValue) {
     // TODO: validate name?
 
     // TODO OPTIMIZE: cache uniform location
@@ -98,19 +103,22 @@ export class ShaderCanvas {
       throw new Error(`uniform location for ${name} not found`);
     }
 
-    const setter = [
-      undefined,
-      this.gl.uniform1fv,
-      this.gl.uniform2fv,
-      this.gl.uniform3fv,
-      this.gl.uniform4fv,
-    ][value.length];
-
-    if (!setter) {
-      throw new Error(`uniform is unexpected length: ${value.length}`);
+    if (typeof value === "number") {
+      this.gl.uniform1f(location, value);
+      return;
     }
 
-    setter.call(this.gl, location, value);
+    switch (value.length) {
+      case 2:
+        this.gl.uniform2fv(location, value);
+        break;
+      case 3:
+        this.gl.uniform3fv(location, value);
+        break;
+      case 4:
+        this.gl.uniform4fv(location, value);
+        break;
+    }
   }
 
   // TODO: accept options, like format, filter, wrap, etc.

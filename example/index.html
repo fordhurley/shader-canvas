@@ -94,10 +94,10 @@
                 }
             `);
             shaderCanvas.setUniform("u_resolution", [shaderCanvas.width * window.devicePixelRatio, shaderCanvas.height * window.devicePixelRatio]);
-            shaderCanvas.setUniform("u_time", [0]);
+            shaderCanvas.setUniform("u_time", 0);
             const animate = (timestamp) => {
                 window.requestAnimationFrame(animate);
-                shaderCanvas.setUniform("u_time", [timestamp / 1000]);
+                shaderCanvas.setUniform("u_time", timestamp / 1000);
                 shaderCanvas.render();
             };
             window.requestAnimationFrame(animate);

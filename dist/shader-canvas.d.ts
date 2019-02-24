@@ -1,3 +1,4 @@
+export declare type UniformValue = number | [number, number] | [number, number, number] | [number, number, number, number];
 export declare class ShaderCanvas {
     domElement: HTMLCanvasElement;
     width: number;
@@ -10,7 +11,7 @@ export declare class ShaderCanvas {
     constructor();
     setSize(width: number, height: number): void;
     setShader(source: string): ShaderErrorMessage[];
-    setUniform(name: string, value: number[]): void;
+    setUniform(name: string, value: UniformValue): void;
     setTexture(name: string, image: HTMLImageElement): void;
     render(): void;
 }
