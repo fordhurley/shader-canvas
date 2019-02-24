@@ -37,7 +37,12 @@
             controls.appendChild(li)
         }
 
+        // Functions that need to run when switching away from a shader:
+        let cleanupFunctions = [];
+
         function setShaderAndCheckErrs(source) {
+            cleanupFunctions.forEach(f => f());
+            cleanupFunctions = []
             const errs = shaderCanvas.setShader(source);
             error.textContent = errs.map((err) => err.text).join("\n");
         }
@@ -95,12 +100,16 @@
             `);
             shaderCanvas.setUniform("u_resolution", [shaderCanvas.width * window.devicePixelRatio, shaderCanvas.height * window.devicePixelRatio]);
             shaderCanvas.setUniform("u_time", 0);
+            let animReq;
             const animate = (timestamp) => {
-                window.requestAnimationFrame(animate);
+                animReq = window.requestAnimationFrame(animate);
                 shaderCanvas.setUniform("u_time", timestamp / 1000);
                 shaderCanvas.render();
             };
-            window.requestAnimationFrame(animate);
+            animReq = window.requestAnimationFrame(animate);
+            cleanupFunctions.push(() => {
+                window.cancelAnimationFrame(animReq);
+            });
             e.preventDefault();
         });
 
@@ -119,13 +128,17 @@
             `);
             shaderCanvas.setUniform("u_resolution", [shaderCanvas.width * window.devicePixelRatio, shaderCanvas.height * window.devicePixelRatio]);
             shaderCanvas.setUniform("u_mouse", [0.5, 0.5]);
-            shaderCanvas.domElement.addEventListener("mousemove", (e) => {
+            const mousemove = (e) => {
                 const newValue = [
                     e.offsetX / shaderCanvas.width,
                     1 - (e.offsetY / shaderCanvas.height),
                 ]
                 shaderCanvas.setUniform("u_mouse", newValue);
                 shaderCanvas.render();
+            }
+            shaderCanvas.domElement.addEventListener("mousemove", mousemove);
+            cleanupFunctions.push(() => {
+                shaderCanvas.domElement.removeEventListener("mousemove", mousemove);
             });
             shaderCanvas.render();
             e.preventDefault();
