@@ -1,5 +1,17 @@
 # shader-canvas
 
+shader-canvas provides a thin, barebones wrapper around the WebGL API for
+running basic fragment shaders like those found in
+[The Book of Shaders](https://thebookofshaders.com/). It is unopinionated,
+providing no uniforms or attributes by default.
+
+The entire library is tiny (~2kB compressed), so it can be used to add images
+and patterns on websites with a significantly smaller download than an image,
+GIF, or video.
+
+
+## Basic example
+
 ```javascript
 import {ShaderCanvas} from "shader-canvas";
 
@@ -44,6 +56,7 @@ Serve the example page:
 Open the example page in your browser:
 
     open http://localhost:8080/example/
+
 
 ## Credits
 
