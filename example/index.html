@@ -242,6 +242,29 @@
             };
             e.preventDefault();
         });
+
+        addControl("load shader", (e) => {
+            fetch(new Request("./example.glsl")).then((resp) => {
+                if (resp.status !== 200) {
+                    throw new Error("bad status: " + resp.status);
+                }
+                return resp.text();
+            }).then((source) => {
+                shaderCanvas.setShader(source);
+                shaderCanvas.setUniform("u_resolution", [shaderCanvas.domElement.width, shaderCanvas.domElement.height]);
+                let animReq;
+                const animate = (timestamp) => {
+                    animReq = window.requestAnimationFrame(animate);
+                    shaderCanvas.setUniform("u_time", timestamp / 1000);
+                    shaderCanvas.render();
+                };
+                animReq = window.requestAnimationFrame(animate);
+                cleanupFunctions.push(() => {
+                    window.cancelAnimationFrame(animReq);
+                });
+            });
+            e.preventDefault();
+        });
     </script>
 </body>
 </html>
