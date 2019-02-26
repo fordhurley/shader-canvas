@@ -21,10 +21,30 @@ export class ShaderCanvas {
         this.height = 0;
         this.textures = {};
         this.domElement = document.createElement("canvas");
-        this.gl = this.domElement.getContext("webgl");
-        this.vertexShader = createShader(this.gl, this.gl.VERTEX_SHADER, defaultVertexShader);
-        this.fragmentShader = createShader(this.gl, this.gl.FRAGMENT_SHADER, defaultFragmentShader);
-        this.shaderProgram = compileShader(this.gl, this.vertexShader, this.fragmentShader);
+        const gl = this.domElement.getContext("webgl");
+        if (!gl) {
+            throw new Error("failed to get webgl context");
+        }
+        this.gl = gl;
+        const vs = this.gl.createShader(this.gl.VERTEX_SHADER);
+        if (!vs) {
+            throw new Error("failed to create vertex shader");
+        }
+        this.vertexShader = vs;
+        const vsErrs = compileShader(this.gl, this.vertexShader, defaultVertexShader);
+        if (vsErrs.length > 0) {
+            throw new Error("failed to compile vertex shader");
+        }
+        const fs = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+        if (!fs) {
+            throw new Error("failed to create fragment shader");
+        }
+        this.fragmentShader = fs;
+        const fsErrs = compileShader(this.gl, this.fragmentShader, defaultFragmentShader);
+        if (fsErrs.length > 0) {
+            throw new Error("failed to compile vertex shader");
+        }
+        this.shaderProgram = createShaderProgram(this.gl, this.vertexShader, this.fragmentShader);
         bindPositionAttribute(this.gl, this.shaderProgram);
         this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
         this.gl.useProgram(this.shaderProgram);
@@ -52,15 +72,9 @@ export class ShaderCanvas {
     }
     setShader(source) {
         const gl = this.gl;
-        gl.shaderSource(this.fragmentShader, source);
-        gl.compileShader(this.fragmentShader);
-        if (!gl.getShaderParameter(this.fragmentShader, gl.COMPILE_STATUS)) {
-            const info = gl.getShaderInfoLog(this.fragmentShader);
-            if (!info) {
-                throw new Error("failed to compile, but found no error log");
-            }
-            console.error(info);
-            return parseErrorMessages(info);
+        const errs = compileShader(gl, this.fragmentShader, source);
+        if (errs.length > 0) {
+            return errs;
         }
         gl.linkProgram(this.shaderProgram);
         if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
@@ -127,31 +141,31 @@ export class ShaderCanvas {
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
     }
 }
-function createShader(gl, type, source) {
-    const shader = gl.createShader(type);
-    if (shader === null) {
-        return null;
-    }
+function compileShader(gl, shader, source) {
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error(gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
+    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        return [];
     }
-    return shader;
+    const info = gl.getShaderInfoLog(shader);
+    if (!info) {
+        throw new Error("failed to compile, but found no error log");
+    }
+    console.error(info);
+    return parseErrorMessages(info);
 }
-function compileShader(gl, vs, fs) {
+function createShaderProgram(gl, vs, fs) {
     const program = gl.createProgram();
     if (program === null) {
-        return null;
+        throw new Error("failed to create shader program");
     }
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error(gl.getProgramInfoLog(program));
-        return null;
+        const info = gl.getProgramInfoLog(program);
+        console.error(info);
+        throw new Error("failed to link program");
     }
     return program;
 }
