@@ -164,7 +164,7 @@ export class ShaderCanvas {
       }
       t = {
         glTexture,
-        unit: lowestUnused(Object.values(this.textures).map((o) => o.unit)),
+        unit: lowestUnused(Object.keys(this.textures).map((k) => this.textures[k].unit)),
       };
       this.textures[name] = t;
     }
@@ -241,17 +241,13 @@ function bindPositionAttribute(gl: WebGLRenderingContext, program: WebGLProgram)
   gl.enableVertexAttribArray(positionLocation);
 }
 
-// TODO: put this in its own module, but that wasn't working with the browser
-// module importing stuff. Decided to just inline this instead of figure that out.
-
-const errorRegex = /^ERROR: \d+:(\d+).*$/mg;
-
 export interface ShaderErrorMessage {
   text: string;
   lineNumber: number;
 }
 
 function parseErrorMessages(msg: string): ShaderErrorMessage[] {
+  const errorRegex = /^ERROR: \d+:(\d+).*$/mg;
   const messages = [];
 
   let match = errorRegex.exec(msg);

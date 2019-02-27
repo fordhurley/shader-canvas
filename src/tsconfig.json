@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
-    "module": "es6",
+    "module": "es2015",
+    "target": "es6",
     "outDir": "../dist",
-    "preserveConstEnums": true,
-    "strict": true,
-    "sourceMap": true,
     "declaration": true,
-    "target": "es2017"
+    "preserveConstEnums": true,
+    "strict": true
   }
 }

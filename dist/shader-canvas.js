@@ -118,7 +118,7 @@ export class ShaderCanvas {
             }
             t = {
                 glTexture,
-                unit: lowestUnused(Object.values(this.textures).map((o) => o.unit)),
+                unit: lowestUnused(Object.keys(this.textures).map((k) => this.textures[k].unit)),
             };
             this.textures[name] = t;
         }
@@ -184,10 +184,8 @@ function bindPositionAttribute(gl, program) {
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(positionLocation);
 }
-// TODO: put this in its own module, but that wasn't working with the browser
-// module importing stuff. Decided to just inline this instead of figure that out.
-const errorRegex = /^ERROR: \d+:(\d+).*$/mg;
 function parseErrorMessages(msg) {
+    const errorRegex = /^ERROR: \d+:(\d+).*$/mg;
     const messages = [];
     let match = errorRegex.exec(msg);
     while (match) {
@@ -223,4 +221,3 @@ function lowestUnused(xs) {
     }
     return unused;
 }
-//# sourceMappingURL=shader-canvas.js.map
