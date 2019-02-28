@@ -57,7 +57,7 @@ export class ShaderCanvas {
     }
     this.vertexShader = vs;
     const vsErrs = compileShader(this.gl, this.vertexShader, defaultVertexShader);
-    if (vsErrs.length > 0) {
+    if (vsErrs) {
       throw new Error("failed to compile vertex shader");
     }
 
@@ -67,7 +67,7 @@ export class ShaderCanvas {
     }
     this.fragmentShader = fs;
     const fsErrs = compileShader(this.gl, this.fragmentShader, defaultFragmentShader);
-    if (fsErrs.length > 0) {
+    if (fsErrs) {
       throw new Error("failed to compile vertex shader");
     }
 
@@ -105,11 +105,11 @@ export class ShaderCanvas {
     ];
   }
 
-  public setShader(source: string): ShaderErrorMessage[] {
+  public setShader(source: string) {
     const gl = this.gl;
 
     const errs = compileShader(gl, this.fragmentShader, source);
-    if (errs.length > 0) {
+    if (errs) {
       return errs;
     }
 
@@ -118,8 +118,6 @@ export class ShaderCanvas {
       console.error(gl.getProgramInfoLog(this.shaderProgram));
       throw new Error("failed to link program");
     }
-
-    return [];
   }
 
   public setUniform(name: string, value: UniformValue) {
@@ -191,11 +189,11 @@ export class ShaderCanvas {
   }
 }
 
-function compileShader(gl: WebGLRenderingContext, shader: WebGLShader, source: string): ShaderErrorMessage[] {
+function compileShader(gl: WebGLRenderingContext, shader: WebGLShader, source: string) {
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    return [];
+    return;
   }
   const info = gl.getShaderInfoLog(shader);
   if (!info) {

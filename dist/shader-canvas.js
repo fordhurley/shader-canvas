@@ -32,7 +32,7 @@ export class ShaderCanvas {
         }
         this.vertexShader = vs;
         const vsErrs = compileShader(this.gl, this.vertexShader, defaultVertexShader);
-        if (vsErrs.length > 0) {
+        if (vsErrs) {
             throw new Error("failed to compile vertex shader");
         }
         const fs = this.gl.createShader(this.gl.FRAGMENT_SHADER);
@@ -41,7 +41,7 @@ export class ShaderCanvas {
         }
         this.fragmentShader = fs;
         const fsErrs = compileShader(this.gl, this.fragmentShader, defaultFragmentShader);
-        if (fsErrs.length > 0) {
+        if (fsErrs) {
             throw new Error("failed to compile vertex shader");
         }
         this.shaderProgram = createShaderProgram(this.gl, this.vertexShader, this.fragmentShader);
@@ -73,7 +73,7 @@ export class ShaderCanvas {
     setShader(source) {
         const gl = this.gl;
         const errs = compileShader(gl, this.fragmentShader, source);
-        if (errs.length > 0) {
+        if (errs) {
             return errs;
         }
         gl.linkProgram(this.shaderProgram);
@@ -81,7 +81,6 @@ export class ShaderCanvas {
             console.error(gl.getProgramInfoLog(this.shaderProgram));
             throw new Error("failed to link program");
         }
-        return [];
     }
     setUniform(name, value) {
         // TODO: validate name?
@@ -145,7 +144,7 @@ function compileShader(gl, shader, source) {
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        return [];
+        return;
     }
     const info = gl.getShaderInfoLog(shader);
     if (!info) {

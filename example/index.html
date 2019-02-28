@@ -44,7 +44,11 @@
             cleanupFunctions.forEach(f => f());
             cleanupFunctions = []
             const errs = shaderCanvas.setShader(source);
-            error.textContent = errs.map((err) => err.text).join("\n");
+            if (errs) {
+                error.textContent = errs.map((err) => err.text).join("\n");
+            } else {
+                error.textContent = "";
+            }
         }
 
         addControl("randomize size", (e) => {
