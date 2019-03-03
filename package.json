@@ -3,11 +3,13 @@
   "version": "0.8.0-dev",
   "description": "Run GLSL shaders in a canvas",
   "repository": "fordhurley/shader-canvas",
-  "main": "dist/shader-canvas.js",
+  "main": "dist/shader-canvas.umd.js",
+  "module": "dist/shader-canvas.js",
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
     "http-server": "^0.11.1",
+    "rollup": "^1.4.0",
     "tslint": "^5.12.1",
     "typescript": "^3.2.2"
   },
@@ -15,6 +17,7 @@
     "lint": "tslint --project ./src",
     "typecheck": "tsc --noEmit --project ./src",
     "build": "tsc --project ./src",
+    "build-umd": "rollup dist/shader-canvas.js --format umd --name shader-canvas --file dist/shader-canvas.umd.js",
     "watch": "tsc --watch --project ./src",
     "serve": "http-server"
   }
