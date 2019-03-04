@@ -7,14 +7,11 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
-      - run: npm install
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run: yarn install
       - save_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
+          key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
             - ./node_modules
-      - run: npm run lint
-      - run: npm run build
-      - run:
-          name: Check that checked in build is up to date (fails on master only)
-          command: .circleci/check-clean-build.sh || test "${CIRCLE_BRANCH}" != "master"
+      - run: yarn run lint
+      - run: yarn run build

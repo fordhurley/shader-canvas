@@ -1,357 +1,287 @@
-import {
-  Mesh,
-  OrthographicCamera,
-  PlaneBufferGeometry,
-  RawShaderMaterial,
-  Scene,
-  ShaderMaterial,
-  TextureLoader,
-  Vector2,
-  WebGLRenderer,
-} from "three/src/Three";
-
-import {detectMode, SourceMode} from "./detect-mode";
-import {parseErrorMessages, ShaderErrorMessage} from "./parse-error-messages";
-import {parseTextureDirectives, TextureDirective} from "./parse-texture-directives";
-
-const legacyVertexShader = `
-  void main() {
-    gl_Position = vec4(position, 1.0);
-  }
-`;
-
-const bareVertexShader = `
+const defaultVertexShader = `
   #ifdef GL_ES
   precision mediump float;
   #endif
-  attribute vec3 position;
-  ${legacyVertexShader}
-`;
-
-const defaultUniforms = `
-  uniform vec2 iResolution;
-  uniform vec2 iMouse;
-  uniform float iGlobalTime;
-  uniform vec2 u_resolution;
-  uniform vec2 u_mouse;
-  uniform float u_time;
-`;
-
-function extractDiagnostics(material: any): any {
-  const program = material.program;
-  if (!program) {
-    return;
+  attribute vec2 position;
+  void main() {
+    gl_Position = vec4(position, 0.0, 1.0);
   }
-  return program.diagnostics;
+`;
+
+const defaultFragmentShader = `
+  #ifdef GL_ES
+  precision mediump float;
+  #endif
+  void main() {
+    gl_FragColor = vec4(0.0);
+  }
+`;
+
+interface Texture {
+  glTexture: WebGLTexture;
+  unit: number;
 }
 
-function nowSeconds(): number {
-  return performance.now() / 1000;
-}
-
-type Renderer = WebGLRenderer;
-export const Renderer = WebGLRenderer;
-export type ShaderErrorMessage = ShaderErrorMessage;
-export type SourceMode = SourceMode;
+export type UniformValue =
+  number |
+  [number, number] |
+  [number, number, number] |
+  [number, number, number, number];
 
 export class ShaderCanvas {
   public domElement: HTMLCanvasElement;
-  public paused: boolean;
 
-  // overridable for configuration
-  public buildTextureURL: (url: string) => string;
-  public onShaderLoad: () => void;
-  public onShaderError: (messages: ShaderErrorMessage[]) => void;
-  public onTextureLoad: () => void;
-  public onTextureError: (textureURL: string) => void;
+  public width: number = 0;
+  public height: number = 0;
 
-  private renderer: Renderer;
-  private rendererIsOwned: boolean;
+  private gl: WebGLRenderingContext;
 
-  private scene: Scene;
-  private camera: OrthographicCamera;
-  private mesh: Mesh;
+  private vertexShader: WebGLShader;
+  private fragmentShader: WebGLShader;
+  private shaderProgram: WebGLProgram;
 
-  private startTimeSeconds: number;
-  private pausedTimeSeconds: number;
+  private textures: {[name: string]: Texture} = {};
 
-  private uniforms: {[name: string]: {value: any}};
-  private textures: {[textureID: string]: TextureDirective};
+  constructor() {
+    this.domElement = document.createElement("canvas");
 
-  private animationFrameRequest: number | undefined;
+    const gl = this.domElement.getContext("webgl");
+    if (!gl) {
+      throw new Error("failed to get webgl context");
+    }
+    this.gl = gl;
 
-  constructor(options: {domElement?: HTMLCanvasElement, renderer?: Renderer} = {}) {
-    this.domElement = options.domElement || document.createElement("canvas");
-
-    this.rendererIsOwned = options.renderer === undefined;
-    this.renderer = options.renderer || new WebGLRenderer({canvas: this.domElement});
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-
-    // Override these for different behavior:
-    this.buildTextureURL = (filePath) => filePath;
-    this.onShaderLoad = () => undefined;
-    this.onShaderError = (messages) => {
-      const errorOutput = messages.map((message) => message.text).join("\n");
-      throw new Error("shader error:\n" + errorOutput);
-    };
-    this.onTextureLoad = () => undefined;
-    this.onTextureError = (textureURL) => {
-      throw new Error("error loading texture " + textureURL);
-    };
-
-    this.scene = new Scene();
-
-    this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
-    this.camera.position.z = 1;
-
-    this.render();
-
-    this.startTimeSeconds = nowSeconds();
-    this.pausedTimeSeconds = 0;
-    this.paused = false;
-
-    this.uniforms = {
-      u_time: {value: 0},
-      u_resolution: {value: new Vector2()},
-      u_mouse: {value: new Vector2()},
-    };
-    // Mirror these values for legacy shaders:
-    this.uniforms.iGlobalTime = this.uniforms.u_time;
-    this.uniforms.iResolution = this.uniforms.u_resolution;
-    this.uniforms.iMouse = this.uniforms.u_mouse;
-
-    this.textures = {};
-
-    this.mesh = new Mesh(new PlaneBufferGeometry(2, 2));
-
-    this.domElement.addEventListener("mousemove", this.onMouseMove.bind(this), false);
-    // TODO: remove this listener in dispose()
-
-    this.update = this.update.bind(this);
-    this.update();
-  }
-
-  public setShader(source: string, mode: SourceMode = "detect"): Promise<ShaderCanvas> {
-    if (mode === "detect") {
-      mode = detectMode(source);
+    const vs = this.gl.createShader(this.gl.VERTEX_SHADER);
+    if (!vs) {
+      throw new Error("failed to create vertex shader");
+    }
+    this.vertexShader = vs;
+    const vsErrs = compileShader(this.gl, this.vertexShader, defaultVertexShader);
+    if (vsErrs) {
+      throw new Error("failed to compile vertex shader");
     }
 
-    const newTextures = parseTextureDirectives(source);
-    const oldTextures = this.textures;
-
-    const texPromise = this.setTextures(newTextures);
-
-    const shaderPromise = new Promise<null>((resolve, reject) => {
-      const oldMaterial = this.mesh.material as ShaderMaterial;
-      this.mesh.material = this.buildMaterial(source, mode);
-
-      this.scene.add(this.mesh); // idempotent (TODO: only do once)
-
-      this.render(); // to force an error
-
-      const diagnostics = extractDiagnostics(this.mesh.material);
-      if (diagnostics && !diagnostics.runnable) {
-        let prefix = diagnostics.fragmentShader.prefix;
-        if (mode === "legacy") {
-          prefix += defaultUniforms;
-        }
-
-        this.mesh.material.dispose();
-        this.setTextures(oldTextures);
-        this.mesh.material = oldMaterial;
-
-        const msg = diagnostics.fragmentShader.log;
-        const errorMessages = parseErrorMessages(msg, prefix);
-        this.onShaderError(errorMessages);
-        reject(errorMessages);
-      } else {
-        oldMaterial.dispose();
-        this.onShaderLoad();
-        resolve();
-      }
-    });
-
-    return Promise.all([texPromise, shaderPromise]).then(() => this);
-  }
-
-  public loadShader(url: string) {
-    const xhr = new XMLHttpRequest();
-    xhr.addEventListener("load", () => {
-      if (xhr.status >= 400) {
-        // FIXME: this is a loadShader error!
-        // console.error("loadShader error:", xhr.status, xhr.statusText);
-        this.onTextureError(url);
-        return;
-      }
-      this.setShader(xhr.responseText);
-    });
-    xhr.addEventListener("error", () => {
-      // FIXME: this is a loadShader error!
-      // console.error("loadShader error:", e);
-      this.onTextureError(url);
-    });
-    xhr.open("GET", url);
-    xhr.send();
-  }
-
-  private buildMaterial(source: string, mode: SourceMode) {
-    const Material = mode === "bare" ? RawShaderMaterial : ShaderMaterial;
-
-    let vertexShader = bareVertexShader;
-    if (Material === ShaderMaterial) {
-      vertexShader = legacyVertexShader;
+    const fs = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+    if (!fs) {
+      throw new Error("failed to create fragment shader");
+    }
+    this.fragmentShader = fs;
+    const fsErrs = compileShader(this.gl, this.fragmentShader, defaultFragmentShader);
+    if (fsErrs) {
+      throw new Error("failed to compile vertex shader");
     }
 
-    let fragmentShader = source;
-    if (mode === "legacy") {
-      fragmentShader = defaultUniforms + source;
-    }
+    this.shaderProgram = createShaderProgram(this.gl, this.vertexShader, this.fragmentShader);
 
-    return new Material({
-      uniforms: this.uniforms,
-      vertexShader,
-      fragmentShader,
-    });
+    bindPositionAttribute(this.gl, this.shaderProgram);
+
+    this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    this.gl.useProgram(this.shaderProgram);
+
+    this.setSize(400, 400);
   }
 
   public setSize(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+
     const dpr = window.devicePixelRatio;
+    this.domElement.width = width * dpr;
+    this.domElement.height = height * dpr;
+    this.domElement.style.width = width + "px";
+    this.domElement.style.height = height + "px";
 
-    this.uniforms.u_resolution.value.x = width * dpr;
-    this.uniforms.u_resolution.value.y = height * dpr;
+    this.gl.viewport(0, 0, this.domElement.width, this.domElement.height);
+  }
 
-    this.renderer.setSize(width, height);
-    if (!this.rendererIsOwned) {
-      this.domElement.width = width * dpr;
-      this.domElement.height = height * dpr;
-      this.domElement.style.width = width + "px";
-      this.domElement.style.height = height + "px";
+  // getResolution is a convenience method for getting a vec2 representing the
+  // size in physical pixels of the canvas.
+  // Typical usage is:
+  //   shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
+  public getResolution(): [number, number] {
+    return [
+      this.domElement.width,
+      this.domElement.height,
+    ];
+  }
+
+  public setShader(source: string) {
+    const gl = this.gl;
+
+    const errs = compileShader(gl, this.fragmentShader, source);
+    if (errs) {
+      return errs;
+    }
+
+    gl.linkProgram(this.shaderProgram);
+    if (!gl.getProgramParameter(this.shaderProgram, gl.LINK_STATUS)) {
+      console.error(gl.getProgramInfoLog(this.shaderProgram));
+      throw new Error("failed to link program");
     }
   }
 
-  public setTime(timeSeconds: number) {
-    this.uniforms.u_time.value = timeSeconds;
+  public setUniform(name: string, value: UniformValue) {
+    // TODO: validate name?
+
+    // TODO OPTIMIZE: cache uniform location
+
+    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    if (location === null) {
+      throw new Error(`uniform location for ${name} not found`);
+    }
+
+    if (typeof value === "number") {
+      this.gl.uniform1f(location, value);
+      return;
+    }
+
+    switch (value.length) {
+      case 2:
+        this.gl.uniform2fv(location, value);
+        break;
+      case 3:
+        this.gl.uniform3fv(location, value);
+        break;
+      case 4:
+        this.gl.uniform4fv(location, value);
+        break;
+    }
+  }
+
+  // TODO: accept options, like format, filter, wrap, etc.
+  public setTexture(name: string, image: HTMLImageElement) {
+    // TODO: validate name?
+
+    const gl = this.gl;
+
+    let t = this.textures[name];
+    if (!t) {
+      const glTexture = gl.createTexture();
+      if (!glTexture) {
+        throw new Error(`unable to create glTexture`);
+      }
+      t = {
+        glTexture,
+        unit: lowestUnused(Object.keys(this.textures).map((k) => this.textures[k].unit)),
+      };
+      this.textures[name] = t;
+    }
+
+    gl.activeTexture(gl.TEXTURE0 + t.unit);
+    gl.bindTexture(gl.TEXTURE_2D, t.glTexture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+
+    const location = gl.getUniformLocation(this.shaderProgram, name);
+    if (location === null) {
+      throw new Error(`uniform location for texture ${name} not found`);
+    }
+    gl.uniform1i(location, t.unit);
   }
 
   public render() {
-    this.renderer.render(this.scene, this.camera);
-    if (!this.rendererIsOwned) {
-      const ctx = this.domElement.getContext("2d");
-      if (!ctx) {
-        throw new Error("could not get 2d context");
-      }
-      ctx.drawImage(this.renderer.domElement, 0, 0);
-    }
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+  }
+}
+
+function compileShader(gl: WebGLRenderingContext, shader: WebGLShader, source: string) {
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    return;
+  }
+  const info = gl.getShaderInfoLog(shader);
+  if (!info) {
+    throw new Error("failed to compile, but found no error log");
+  }
+  console.error(info);
+  return parseErrorMessages(info);
+}
+
+function createShaderProgram(gl: WebGLRenderingContext, vs: WebGLShader, fs: WebGLShader): WebGLProgram {
+  const program = gl.createProgram();
+  if (program === null) {
+    throw new Error("failed to create shader program");
   }
 
-  private setTextures(textures: {[textureID: string]: TextureDirective}): Promise<ShaderCanvas> {
-    const newTextureIDs = [];
-    const oldTextureIDs = [];
-    for (const id in textures) {
-      if (!textures.hasOwnProperty(id)) {
-        continue;
-      }
-      if (!this.textures.propertyIsEnumerable(id)) {
-        newTextureIDs.push(id);
-        continue;
-      }
-      if (textures[id].filePath !== this.textures[id].filePath) {
-        // Changed, so it's both old and new.
-        newTextureIDs.push(id);
-        oldTextureIDs.push(id);
-      }
-    }
-    for (const id in this.textures) {
-      if (!textures.propertyIsEnumerable(id)) {
-        oldTextureIDs.push(id);
-      }
-    }
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const info = gl.getProgramInfoLog(program);
+    console.error(info);
+    throw new Error("failed to link program");
+  }
 
-    oldTextureIDs.forEach((id) => {
-      this.removeTexture(id);
+  return program;
+}
+
+function bindPositionAttribute(gl: WebGLRenderingContext, program: WebGLProgram) {
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+  const positions = new Float32Array([
+    -1.0, -1.0,
+    -1.0,  1.0,
+     1.0, -1.0,
+     1.0,  1.0,
+  ]);
+  gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+  const positionLocation = gl.getAttribLocation(program, "position");
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(positionLocation);
+}
+
+export interface ShaderErrorMessage {
+  text: string;
+  lineNumber: number;
+}
+
+function parseErrorMessages(msg: string): ShaderErrorMessage[] {
+  const errorRegex = /^ERROR: \d+:(\d+).*$/mg;
+  const messages = [];
+
+  let match = errorRegex.exec(msg);
+  while (match) {
+    messages.push({
+      text: match[0],
+      lineNumber: parseInt(match[1], 10),
     });
-    const promises = newTextureIDs.map((id) => {
-      const filePath = textures[id].filePath;
-      return this.addTexture(id, filePath);
-    });
 
-    return Promise.all(promises).then(() => this);
+    // Look for another error:
+    match = errorRegex.exec(msg);
   }
 
-  private addTexture(textureID: string, filePath: string): Promise<null> {
-    if (this.textures[textureID]) {
-      throw new Error("tried to add a texture that already exists");
+  return messages;
+}
+
+// This is a flavor of Shlemiel the painter's algorithm.
+// http://wiki.c2.com/?ShlemielThePainter
+//
+// TODO: figure out how to run tests, but I've spot checked these:
+//   [] => 0
+//   [0, 1, 2, 3, 4] => 5
+//   [0, 1, 3, 4] => 2
+//   [1, 3, 4] => 0
+//   [4] => 0
+//   [4, 3, 2, 1, 0] => 5
+//   [4, 2, 1, 0] => 3
+//   [4, 2, 1, 10] => 0
+//   [2, 0, 3, 4] => 1
+function lowestUnused(xs: number[]): number {
+  let unused = 0;
+  for (let i = 0; i < xs.length; i++) {
+    if (xs[i] === unused) {
+      unused++;
+      i = -1; // go back to the beginning
     }
-
-    const textureURL = this.buildTextureURL(filePath);
-
-    return new Promise<null>((resolve, reject) => {
-      const onLoad = () => {
-        this.onTextureLoad();
-        resolve();
-      };
-
-      const onError = (e: ErrorEvent) => {
-        this.onTextureError(textureURL);
-        reject(e);
-      };
-
-      const texture = new TextureLoader().load(textureURL, onLoad, undefined, onError);
-      this.uniforms[textureID] = {value: texture};
-      this.textures[textureID] = {textureID, filePath};
-
-      (this.mesh.material as ShaderMaterial).needsUpdate = true;
-    });
   }
-
-  private removeTexture(textureID: string) {
-    const texture = this.textures[textureID];
-    if (!texture) {
-      throw new Error("tried to remove a texture that doesn't exist");
-    }
-    delete this.textures[textureID];
-
-    this.uniforms[textureID].value.dispose();
-    delete this.uniforms[textureID];
-
-    (this.mesh.material as ShaderMaterial).needsUpdate = true;
-  }
-
-  public dispose() {
-    if (this.rendererIsOwned) {
-      this.renderer.dispose();
-    }
-
-    if (this.animationFrameRequest !== undefined) {
-      cancelAnimationFrame(this.animationFrameRequest);
-    }
-
-    // TODO: only remove this if we created it
-    this.domElement.remove();
-  }
-
-  private onMouseMove(event: MouseEvent) {
-    const {width, height} = this.renderer.getSize();
-    this.uniforms.u_mouse.value.x = event.offsetX / width;
-    this.uniforms.u_mouse.value.y = 1 - (event.offsetY / height);
-  }
-
-  private update() {
-    if (this.paused) { return; }
-    this.animationFrameRequest = requestAnimationFrame(this.update);
-    this.setTime(nowSeconds() - this.startTimeSeconds);
-    this.render();
-  }
-
-  public togglePause(): void {
-    this.paused = !this.paused;
-    if (!this.paused) {
-      // Unpaused now, so move our start time up to account for the time we
-      // spent paused:
-      this.startTimeSeconds += nowSeconds() - this.pausedTimeSeconds;
-    } else {
-      this.pausedTimeSeconds = nowSeconds();
-    }
-    this.update();
-  }
+  return unused;
 }

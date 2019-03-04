@@ -1,44 +1,22 @@
-import { WebGLRenderer } from "three/src/Three";
-import { SourceMode } from "./detect-mode";
-import { ShaderErrorMessage } from "./parse-error-messages";
-declare type Renderer = WebGLRenderer;
-export declare const Renderer: typeof WebGLRenderer;
-export declare type ShaderErrorMessage = ShaderErrorMessage;
-export declare type SourceMode = SourceMode;
+export declare type UniformValue = number | [number, number] | [number, number, number] | [number, number, number, number];
 export declare class ShaderCanvas {
     domElement: HTMLCanvasElement;
-    paused: boolean;
-    buildTextureURL: (url: string) => string;
-    onShaderLoad: () => void;
-    onShaderError: (messages: ShaderErrorMessage[]) => void;
-    onTextureLoad: () => void;
-    onTextureError: (textureURL: string) => void;
-    private renderer;
-    private rendererIsOwned;
-    private scene;
-    private camera;
-    private mesh;
-    private startTimeSeconds;
-    private pausedTimeSeconds;
-    private uniforms;
+    width: number;
+    height: number;
+    private gl;
+    private vertexShader;
+    private fragmentShader;
+    private shaderProgram;
     private textures;
-    private animationFrameRequest;
-    constructor(options?: {
-        domElement?: HTMLCanvasElement;
-        renderer?: Renderer;
-    });
-    setShader(source: string, mode?: SourceMode): Promise<ShaderCanvas>;
-    loadShader(url: string): void;
-    private buildMaterial;
+    constructor();
     setSize(width: number, height: number): void;
-    setTime(timeSeconds: number): void;
+    getResolution(): [number, number];
+    setShader(source: string): ShaderErrorMessage[] | undefined;
+    setUniform(name: string, value: UniformValue): void;
+    setTexture(name: string, image: HTMLImageElement): void;
     render(): void;
-    private setTextures;
-    private addTexture;
-    private removeTexture;
-    dispose(): void;
-    private onMouseMove;
-    private update;
-    togglePause(): void;
 }
-export {};
+export interface ShaderErrorMessage {
+    text: string;
+    lineNumber: number;
+}
