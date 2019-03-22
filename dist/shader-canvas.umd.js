@@ -88,6 +88,10 @@
               throw new Error("failed to link program");
           }
       }
+      testUniform(name) {
+          const location = this.gl.getUniformLocation(this.shaderProgram, name);
+          return location !== null;
+      }
       setUniform(name, value) {
           // TODO: validate name?
           // TODO OPTIMIZE: cache uniform location

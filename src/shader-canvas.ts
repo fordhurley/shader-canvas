@@ -120,6 +120,11 @@ export class ShaderCanvas {
     }
   }
 
+  public testUniform(name: string): boolean {
+    const location = this.gl.getUniformLocation(this.shaderProgram, name);
+    return location !== null;
+  }
+
   public setUniform(name: string, value: UniformValue) {
     // TODO: validate name?
 
