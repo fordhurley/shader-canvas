@@ -13,6 +13,7 @@
     "typescript": "^3.2.2"
   },
   "scripts": {
+    "prepublish": "yarn run build && yarn run build-umd",
     "lint": "tslint --project ./src",
     "typecheck": "tsc --noEmit --project ./src",
     "build": "tsc --project ./src",
