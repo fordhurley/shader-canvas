@@ -6,12 +6,20 @@ jobs:
       - image: circleci/node:latest
     steps:
       - checkout
+
       - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
-      - run: yarn install
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}-{{ checksum "yarn.lock" }}
+
+      # --ignore-scripts makes the prepublish script not run, which is good
+      # because we want to do that in a separate build step.
+      - run: yarn install --ignore-scripts
+
       - save_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
           paths:
-            - ./node_modules
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}-{{ checksum "yarn.lock" }}
+
       - run: yarn run lint
       - run: yarn run build
+      - run: yarn run build-umd
