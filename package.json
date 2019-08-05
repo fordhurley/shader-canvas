@@ -8,7 +8,7 @@
   "dependencies": {},
   "devDependencies": {
     "http-server": "^0.11.1",
-    "rollup": "^1.10.0",
+    "rollup": "^1.19.2",
     "tslint": "^5.12.1",
     "typescript": "^3.2.2"
   },
