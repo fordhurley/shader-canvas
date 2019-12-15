@@ -1,6 +1,6 @@
 {
   "name": "shader-canvas",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "Run GLSL shaders in a canvas",
   "repository": "fordhurley/shader-canvas",
   "main": "dist/shader-canvas.js",
