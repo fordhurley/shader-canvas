@@ -16,6 +16,15 @@
     <script type="module">
         import {ShaderCanvas} from "../dist/shader-canvas.js";
 
+        const defaultShader = `
+            precision mediump float;
+            uniform vec2 u_resolution;
+            void main() {
+                vec2 uv = gl_FragCoord.xy / u_resolution;
+                gl_FragColor = vec4(uv, 1.0, 1.0);
+            }
+        `;
+
         const canvases = document.querySelector(".canvases");
         const error = document.querySelector(".error");
         const controls = document.querySelector(".controls");
@@ -63,14 +72,7 @@
         });
 
         addControl("pretty gradient shader", (e) => {
-            setShaderAndCheckErrs(`
-                precision mediump float;
-                uniform vec2 u_resolution;
-                void main() {
-                    vec2 uv = gl_FragCoord.xy / u_resolution;
-                    gl_FragColor = vec4(uv, 1.0, 1.0);
-                }
-            `);
+            setShaderAndCheckErrs(defaultShader);
             shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
             shaderCanvas.render();
             e.preventDefault();
@@ -146,7 +148,7 @@
             });
             shaderCanvas.render();
             e.preventDefault();
-        })
+        });
 
         addControl("bad shader", (e) => {
             // ERROR! no uv declaration
@@ -269,6 +271,10 @@
             });
             e.preventDefault();
         });
+
+        setShaderAndCheckErrs(defaultShader);
+        shaderCanvas.setUniform("u_resolution", shaderCanvas.getResolution());
+        shaderCanvas.render();
     </script>
 </body>
 </html>
